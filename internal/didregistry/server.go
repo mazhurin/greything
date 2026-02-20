@@ -44,14 +44,16 @@ func (s *Server) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userDID := "did:web:" + s.Host + ":users:" + req.Username
-	u := &store.User{
-		Username:   req.Username,
-		DID:        userDID,
-		RootPubMB:  req.RootPublicKeyMultibase,
-		Services:   map[string]string{},
-		DeviceKeys: map[string]string{},
-		UpdatedAt:  time.Now().UTC(),
-	}
+    u := &store.User{
+        Username:    req.Username,
+        DID:         userDID,
+        RootPubMB:   req.RootPublicKeyMultibase,
+        Services:    map[string]string{},
+        DeviceKeys:  map[string]string{},
+        DeviceXKeys: map[string]string{},
+        UpdatedAt:   time.Now().UTC(),
+    }
+
 	if err := s.Store.CreateUser(u); err != nil {
 		http.Error(w, err.Error(), 409)
 		return
@@ -74,49 +76,84 @@ func (s *Server) handleUserOps(w http.ResponseWriter, r *http.Request) {
 	username := parts[0]
 	op := parts[1]
 
-	switch op {
-	case "services":
-		if r.Method != http.MethodPut {
-			http.Error(w, "method", 405)
-			return
-		}
-		var req types.UpdateServicesRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "bad json", 400)
-			return
-		}
-		err := s.Store.UpdateServices(username, map[string]string{
-			"pod":     req.Pod,
-			"events":  req.Events,
-			"profile": req.Profile,
-		})
-		if err != nil {
-			http.Error(w, err.Error(), 404)
-			return
-		}
-		writeJSON(w, map[string]string{"ok": "true"})
-	case "device-keys":
-		if r.Method != http.MethodPut {
-			http.Error(w, "method", 405)
-			return
-		}
-		var req types.AddDeviceKeyRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "bad json", 400)
-			return
-		}
-		if req.DeviceKeyID == "" || req.PublicKeyMultibase == "" {
-			http.Error(w, "missing fields", 400)
-			return
-		}
-		if err := s.Store.AddDeviceKey(username, req.DeviceKeyID, req.PublicKeyMultibase); err != nil {
-			http.Error(w, err.Error(), 404)
-			return
-		}
-		writeJSON(w, map[string]string{"ok": "true"})
-	default:
-		http.Error(w, "not found", 404)
-	}
+	println("handleUserOps path=", r.URL.Path, " username=", username, " op=", op)
+
+
+    switch op {
+    case "services":
+        if r.Method != http.MethodPut {
+            http.Error(w, "method", 405)
+            return
+        }
+        var req types.UpdateServicesRequest
+        if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+            http.Error(w, "bad json", 400)
+            return
+        }
+        err := s.Store.UpdateServices(username, map[string]string{
+            "pod":     req.Pod,
+            "events":  req.Events,
+            "profile": req.Profile,
+        })
+        if err != nil {
+            http.Error(w, err.Error(), 404)
+            return
+        }
+        writeJSON(w, map[string]string{"ok": "true"})
+
+    case "device-keys":
+        // Ed25519 signing keys
+        if r.Method != http.MethodPut {
+            http.Error(w, "method", 405)
+            return
+        }
+        var req types.AddDeviceKeyRequest
+        if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+            http.Error(w, "bad json", 400)
+            return
+        }
+        if req.DeviceKeyID == "" || req.PublicKeyMultibase == "" {
+            http.Error(w, "missing fields", 400)
+            return
+        }
+        if !strings.HasPrefix(req.PublicKeyMultibase, "z") {
+            http.Error(w, "publicKeyMultibase must start with 'z' (base58btc multibase)", 400)
+            return
+        }
+        if err := s.Store.AddDeviceKey(username, req.DeviceKeyID, req.PublicKeyMultibase); err != nil {
+            http.Error(w, err.Error(), 404)
+            return
+        }
+        writeJSON(w, map[string]string{"ok": "true"})
+
+    case "device-xkeys":
+        // X25519 encryption keys
+        if r.Method != http.MethodPut {
+            http.Error(w, "method", 405)
+            return
+        }
+        var req types.AddDeviceXKeyRequest
+        if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+            http.Error(w, "bad json", 400)
+            return
+        }
+        if req.DeviceKeyID == "" || req.PublicKeyMultibase == "" {
+            http.Error(w, "missing fields", 400)
+            return
+        }
+        if !strings.HasPrefix(req.PublicKeyMultibase, "z") {
+            http.Error(w, "publicKeyMultibase must start with 'z' (base58btc multibase)", 400)
+            return
+        }
+        if err := s.Store.AddDeviceXKey(username, req.DeviceKeyID, req.PublicKeyMultibase); err != nil {
+            http.Error(w, err.Error(), 404)
+            return
+        }
+        writeJSON(w, map[string]string{"ok": "true"})
+
+    default:
+        http.Error(w, "not found", 404)
+    }
 }
 
 func (s *Server) handleDidJSON(w http.ResponseWriter, r *http.Request) {
@@ -135,7 +172,8 @@ func (s *Server) handleDidJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	doc := did.Build(u.DID, u.RootPubMB, u.Services, u.DeviceKeys)
+	doc := did.Build(u.DID, u.RootPubMB, u.Services, u.DeviceKeys, u.DeviceXKeys)
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(doc)
 }

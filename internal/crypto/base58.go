@@ -37,7 +37,7 @@ func base58Encode(b []byte) string {
 	return string(out)
 }
 
-func base58Decode(s string) ([]byte, error) {
+    func base58Decode(s string) ([]byte, error) {
 	if s == "" {
 		return nil, errors.New("empty base58")
 	}
@@ -82,4 +82,10 @@ func base58Decode(s string) ([]byte, error) {
 // Exported for CLI tools and tests.
 func Base58Encode(b []byte) string {
 	return base58Encode(b)
+}
+
+// Base58Decode decodes base58btc string (without multibase prefix).
+// Exported for CLI tools and tests.
+func Base58Decode(s string) ([]byte, error) {
+	return base58Decode(s)
 }

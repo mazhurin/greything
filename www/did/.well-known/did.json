@@ -1,0 +1,21 @@
+{
+  "@context": "https://www.w3.org/ns/did/v1",
+  "id": "did:web:did.greything.com",
+  "verificationMethod": [
+    {
+      "id": "did:web:did.greything.com#key-1",
+      "type": "Ed25519VerificationKey2020",
+      "controller": "did:web:did.greything.com",
+      "publicKeyMultibase": "zBWgZeL4Uv4Cey1B4nNXmnmxb4Ux7M9wu1fum1idbFazd"
+    }
+  ],
+  "authentication": [
+    "did:web:did.greything.com#key-1"
+  ],
+  "assertionMethod": [
+    "did:web:did.greything.com#key-1"
+  ],
+  "capabilityInvocation": [
+    "did:web:did.greything.com#key-1"
+  ]
+}

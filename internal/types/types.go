@@ -25,6 +25,12 @@ type AddDeviceKeyRequest struct {
 	PublicKeyMultibase  string `json:"publicKeyMultibase"`  // ed25519 pubkey multibase (base58btc)
 }
 
+// For X25519 device encryption keys.
+type AddDeviceXKeyRequest struct {
+	DeviceKeyID        string `json:"deviceKeyId"`
+	PublicKeyMultibase string `json:"publicKeyMultibase"`
+}
+
 // --- Signed payloads (Post / Event) ---
 
 type Signature struct {

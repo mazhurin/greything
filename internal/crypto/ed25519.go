@@ -45,3 +45,32 @@ func SignEd25519(priv ed25519.PrivateKey, msg string) string {
 	sig := ed25519.Sign(priv, []byte(msg))
 	return b64urlEncode(sig)
 }
+
+// DecodeBase64URL decodes a base64url-encoded string (no padding).
+func DecodeBase64URL(s string) ([]byte, error) {
+	return b64urlDecode(s)
+}
+
+// EncodeBase64URL encodes bytes to base64url (no padding).
+func EncodeBase64URL(b []byte) string {
+	return b64urlEncode(b)
+}
+
+// DecodeMultibase decodes a multibase string (currently only base58btc with 'z' prefix).
+func DecodeMultibase(s string) ([]byte, error) {
+	if !strings.HasPrefix(s, "z") {
+		return nil, errors.New("only base58btc multibase (prefix z) supported")
+	}
+	return base58Decode(s[1:])
+}
+
+// VerifyEd25519Bytes verifies an Ed25519 signature with raw bytes.
+func VerifyEd25519Bytes(pub []byte, msg []byte, sig []byte) bool {
+	if len(pub) != ed25519.PublicKeySize {
+		return false
+	}
+	if len(sig) != ed25519.SignatureSize {
+		return false
+	}
+	return ed25519.Verify(ed25519.PublicKey(pub), msg, sig)
+}
