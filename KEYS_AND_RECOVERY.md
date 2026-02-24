@@ -7,7 +7,6 @@ The goal is to provide:
 * strong security guarantees
 * user sovereignty
 * realistic recovery paths
-* Web2-level usability where possible
 
 GreyThing explicitly avoids custodial key management.
 
@@ -65,206 +64,143 @@ Device keys are revoked by updating the DID Document or delegation metadata.
 
 ---
 
-### 2.3 Encrypted Backup Key
+### 2.3 Encryption Keys (X25519)
 
-* Encrypted copy of the root private key
-* Stored in the user's Solid Pod
-* Encrypted client-side only
+* Algorithm: X25519
+* Purpose:
 
-Encryption requirements:
-
-* Strong KDF (Argon2 or scrypt)
-* Unique salt
-* Configurable work factor
-
-The Solid Pod never stores usable private keys.
-
----
-
-## 3. Key Generation Flow
-
-1. User registers on first device
-2. Client generates root identity key locally
-3. Public key is published in DID Document
-4. Root private key remains client-side
-5. Encrypted backup is created and stored in Solid Pod
-6. Device key is generated and delegated
-
-GreyThing infrastructure is not involved in key generation.
-
----
-
-## 4. Signing Flow
-
-1. User performs an action
-2. Client signs payload with device key
-3. Signed data is stored in Solid Pod
-4. Verifiers:
-
-   * Resolve DID
-   * Validate delegation chain
-   * Verify signature
-
-This ensures content authenticity independent of storage provider.
-
----
-
-## 5. Backup Password vs Recovery Phrase
-
-GreyThing distinguishes between two concepts:
-
-### 5.1 Backup Password
-
-* Protects the encrypted backup stored in the Solid Pod
-* Can be changed
-* Does not generate keys
-* Used for recovery on new devices
-
-This password protects a **copy**, not the identity itself.
-
----
-
-### 5.2 Recovery Phrase (Seed Phrase)
-
-* Deterministically generates the root identity key
-* High-entropy word sequence
-* Optional but strongly recommended
-* Shown once during setup
+  * Key agreement for E2EE private messages
+  * Derive shared secrets (HKDF-SHA256 + ChaCha20-Poly1305)
 
 Properties:
 
-* Cannot be changed
-* Must be stored offline
-* Never uploaded or stored in the pod
-
-Compromise or loss of the recovery phrase has irreversible consequences.
+* Device-bound
+* Listed in DID Document under `keyAgreement`
+* Replaceable — add/revoke via DID Document updates
 
 ---
 
-## 6. Recovery Scenarios
+## 3. Recovery
 
-### 6.1 New Device Recovery (Most Common)
+### 3.1 Design
 
-Requirements:
+Recovery is **opt-in**. Users choose a passphrase during registration (or later via `gt-recovery setup`). The root private key is encrypted and stored as a public blob in the user's storage pod. Anyone can fetch the ciphertext; only the passphrase holder can decrypt.
 
-* Access to Solid Pod
-* Backup password
+### 3.2 Encryption Scheme
 
-Flow:
+```
+passphrase → Argon2id(t=3, m=64MB, p=4, salt=rand(16)) → 32-byte key
+key + rand(12) nonce → ChaCha20-Poly1305 → encrypt(Ed25519 privkey, 64 bytes)
+```
 
-1. User authenticates to Solid Pod
-2. Client downloads encrypted backup
-3. User enters backup password
-4. Root key is decrypted client-side
-5. New device key is generated and delegated
+### 3.3 Encrypted Key Blob
 
----
+The blob is self-describing JSON stored as a content-addressed blob:
 
-### 6.2 Device-to-Device Authorization
+```json
+{
+  "type": "EncryptedRootKeyV1",
+  "alg": "argon2id+chacha20poly1305",
+  "publicKeyMultibase": "z6Mk...",
+  "kdf": { "alg": "argon2id", "time": 3, "memory": 65536, "threads": 4, "saltB64": "..." },
+  "nonceB64": "...",
+  "ciphertextB64": "...",
+  "hint": "childhood street + first pet",
+  "createdAt": "2026-02-23T10:00:00Z"
+}
+```
 
-Requirements:
+* `publicKeyMultibase` — lets the recovery tool verify decryption succeeded locally
+* `hint` — optional, public passphrase hint (omitted if empty)
 
-* At least one trusted device
+The blob hash is pointed to by the `recovery-key` head in the user's storage pod.
 
-Flow:
+### 3.4 DID Document: recoveryPolicy
 
-1. Existing device authorizes new device
-2. Delegation is signed by root key
-3. New device becomes active
+When recovery is configured, the DID Document includes:
 
-Root key never leaves the trusted device.
+```json
+{
+  "recoveryPolicy": {
+    "type": "PassphraseEncryptedKey",
+    "storageHead": "recovery-key",
+    "setAt": "2026-02-23T10:00:00Z"
+  }
+}
+```
 
----
+**Protected field**: device keys cannot add, remove, or modify `recoveryPolicy`. Only the root key can change it. This is enforced server-side by the DIDS server.
 
-### 6.3 Recovery via Recovery Phrase
+### 3.5 Recovery Flow
 
-Requirements:
+1. Fetch DID Document → read `recoveryPolicy.storageHead`
+2. GET the head (e.g. `recovery-key`) → get blob hash
+3. GET the blob (public, no auth required)
+4. Display hint (if present)
+5. Prompt for passphrase
+6. Derive key with Argon2id, decrypt with ChaCha20-Poly1305
+7. Verify decrypted public key matches `publicKeyMultibase`
+8. Save recovered root key to keys directory
 
-* Recovery phrase
+### 3.6 CLI Tools
 
-Flow:
+**Set up or rotate recovery passphrase** (requires root key):
 
-1. User enters recovery phrase
-2. Root key is deterministically reconstructed
-3. DID Document is updated
-4. New device keys are issued
+```bash
+go run ./cmd/gt-recovery setup \
+  --key .greything/keys/{id}-root.json \
+  --did did:web:did.greything.com:u:{id}
+```
 
-This method works even if Solid Pod data is lost.
+**Recover root key from passphrase**:
 
----
+```bash
+go run ./cmd/gt-recovery recover \
+  --did did:web:did.greything.com:u:{id} \
+  --keys-dir .greything/keys
+```
 
-### 6.4 Social or Service-Assisted Recovery (Optional)
+### 3.7 Passphrase Hint
 
-Requirements:
+The hint is stored in plaintext inside the encrypted key blob. It is **public** — anyone who fetches the blob can read it.
 
-* Pre-configured trusted parties
-* Multi-party approval (M-of-N)
+Good hints describe the *pattern*, not the *answer*:
+* "childhood street + first pet"
+* "favorite book title backwards"
 
-Flow:
-
-1. Recovery request initiated
-2. Trusted parties co-sign key rotation
-3. DID Document is updated
-
-GreyThing may participate as one co-signer but never alone.
-
----
-
-## 7. Key Rotation
-
-Key rotation is supported at all levels:
-
-* Device key rotation: routine
-* Root key rotation: rare, explicit
-
-Rotation requires:
-
-* Existing root key
-* Or recovery mechanisms
-
-Rotation updates the DID Document accordingly.
-
----
-
-## 8. Threat Model Summary
-
-### 8.1 Pod Compromise
-
-* Encrypted backups may be stolen
-* Without backup password, keys remain safe
-
----
-
-### 8.2 GreyThing Compromise
-
-* DID Documents may be temporarily unavailable
-* No keys or content are exposed
+Bad hints reveal the passphrase:
+* "fluffy123"
+* "the answer is blue"
 
 ---
 
-### 8.3 Device Loss
+## 4. Key Storage
 
-* Recoverable via backup or recovery phrase
+All private keys are stored locally in `.greything/keys/` as JSON files with mode `0600`.
+
+| File | Type | Purpose |
+|------|------|---------|
+| `{id}-root.json` | Ed25519 | Root identity key |
+| `{id}-device-1.json` | Ed25519 | Device signing key |
+| `{id}-x25519-1.json` | X25519 | Encryption key |
+
+Key file format:
+
+```json
+{
+  "kty": "Ed25519",
+  "kid": "root",
+  "createdAt": "2026-02-23T10:00:00Z",
+  "publicKeyMultibase": "z6Mk...",
+  "privateKeyB64Url": "..."
+}
+```
 
 ---
 
-## 9. Explicit Non-Goals
+## 5. Key Lifecycle
 
-GreyThing intentionally does NOT:
-
-* Recover identities without user participation
-* Store plaintext private keys
-* Provide password-based identity custody
-* Hide key responsibility from users
-
----
-
-## 10. Summary
-
-GreyThing key management provides:
-
-* Strong cryptographic identity ownership
-* Practical recovery paths
-* Minimal trust in infrastructure providers
-
-User sovereignty is preserved even in failure scenarios.
+1. **Generation** — `gt-register` creates root + device + x25519 keys
+2. **Device keys** — add/revoke with `gt-device-key add|revoke`
+3. **Root key rotation** — update DID Document with new root key (signed by old root key)
+4. **Recovery** — `gt-recovery setup` encrypts root key with passphrase; `gt-recovery recover` restores it

@@ -21,6 +21,18 @@ server {
     try_files $uri =404;
   }
 
+  # Registration page
+  location = /register.html {
+    root /var/www/did;
+    try_files $uri =404;
+  }
+
+  # Profile editor
+  location = /profile.html {
+    root /var/www/did;
+    try_files $uri =404;
+  }
+
   # Name mappings API
   location /.well-known/greything/names/ {
     root /var/www/did;
@@ -40,8 +52,9 @@ server {
   }
 
   location / {
-    return 200 'ok';
-    add_header Content-Type text/plain;
+    root /var/www/did;
+    index index.html;
+    try_files $uri $uri/ =404;
   }
 
   listen 443 ssl;

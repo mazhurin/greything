@@ -172,7 +172,7 @@ func (s *Server) handleDidJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	doc := did.Build(u.DID, u.RootPubMB, u.Services, u.DeviceKeys, u.DeviceXKeys)
+	doc := did.Build(u.DID, u.RootPubMB, u.Services, u.DeviceKeys, u.DeviceXKeys, nil)
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(doc)
