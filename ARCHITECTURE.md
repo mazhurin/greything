@@ -2,283 +2,339 @@
 
 This document describes the **technical architecture** of GreyThing and how its main components interact.
 
-The goal of this architecture is to provide:
+GreyThing explores a shift:
 
-* portable identity
-* user-owned data
-* decentralized discovery
-* replaceable intelligence
+> **From platforms to protocols: letting users own identity and data.**
 
-While remaining practical to implement and operate.
+Instead of platforms owning identity, storage and permissions, GreyThing separates these concerns into independent layers that interact through open protocols.
+
+The architecture enables:
+
+- portable identity
+- user-owned storage
+- capability-based access control
+- services and AI agents interacting with user-authorized data
 
 ---
 
-## 1. High-Level System View
+# 1. System Overview
 
-GreyThing is composed of **four loosely coupled layers**:
+GreyThing separates four fundamental concerns:
 
-1. Identity Layer (DID)
-2. Storage Layer (Solid Pods)
-3. Discovery Layer (Events & Indexes)
-4. Intelligence Layer (AI Agents)
+1. **Identity Layer** — decentralized identifiers (DID)
+2. **Storage Layer** — portable user-owned storage endpoints
+3. **Access Layer** — signed capability grants
+4. **Service Layer** — applications and agents consuming data
 
 No single layer has global authority.
 
+Services interact with user data but **do not own it**.
+
 ---
 
-## 2. Identity Layer
+# 2. Identity Layer
 
-### 2.1 Decentralized Identifiers (DID)
+## 2.1 Decentralized Identifiers
 
-GreyThing uses `did:web` as the initial DID method.
+GreyThing uses **W3C Decentralized Identifiers (DID)**.
+
+Initial implementation uses `did:web`.
 
 Example:
-
-```
 did:web:greything.com:users:alice
-```
 
-The DID resolves to a **DID Document** hosted by GreyThing:
 
-```
+The DID resolves to:
 https://greything.com/users/alice/did.json
-```
 
-GreyThing hosts only DID Documents and acts as an **identity bootstrap provider**.
+
+The DID document is the **root of identity**.
+
+Identity continuity is anchored in cryptographic keys rather than domain ownership.
 
 ---
 
-### 2.2 DID Document Responsibilities
+## 2.2 DID Document Contents
 
 A DID Document contains:
 
-* Public verification keys
-* Authentication and delegation methods
-* Service endpoints
+- verification keys
+- authentication methods
+- service endpoints
 
-It does NOT contain:
+It does **not** contain:
 
-* Private keys
-* User content
-* Personal data
+- private keys
+- user content
+- personal data
 
-The DID Document is the **root of identity**, not a profile.
-
----
-
-### 2.3 DID Migration
-
-Users may:
-
-* Change Solid Pod providers
-* Later migrate to a custom domain DID
-
-Migration is handled by:
-
-* Updating service endpoints
-* DID linking (`alsoKnownAs`)
-* Optional HTTP redirect
-
-Identity continuity is preserved across migrations.
+The document only describes **how to interact with the identity**.
 
 ---
 
-## 3. Key Management Model
+## 2.3 Cross-Domain Identity Migration
 
-### 3.1 Key Types
+Identity is defined by the **root cryptographic key**, not the hosting domain.
 
-GreyThing uses a multi-tier key architecture:
+Users may migrate identity by:
 
-1. **Root Identity Key**
+- updating DID service endpoints
+- linking identities (`alsoKnownAs`)
+- optionally redirecting the DID host
 
-   * Ed25519
-   * Signs DID Documents
-   * Used for rotation and recovery
-
-2. **Device / Session Keys**
-
-   * Short-lived
-   * Used for daily actions
-   * Delegated from root key
-
-3. **Encrypted Backup Key**
-
-   * Encrypted copy of root key
-   * Stored in Solid Pod
+This enables **cross-domain identity migration** without losing identity continuity.
 
 ---
 
-### 3.2 Key Storage Rules
+# 3. Key Architecture
 
-* Root private key:
+GreyThing uses a multi-tier key model.
 
-  * Generated client-side
-  * Never leaves the client in plaintext
+## 3.1 Root Identity Key
 
-* Device keys:
+- Ed25519
+- anchors identity
+- signs DID updates
+- used for recovery
 
-  * Stored in local secure storage
+## 3.2 Device Keys
 
-* Backup key:
+- delegated from root key
+- used for daily actions
+- stored locally
 
-  * Encrypted client-side
-  * Stored in Solid Pod
+Device keys sign:
 
-GreyThing never has access to usable private keys.
+- messages
+- grants
+- content updates
 
----
+## 3.3 Backup Keys
 
-### 3.3 Signing Flow
+Encrypted root key backups may be stored in user storage.
 
-1. User action (post, like, comment)
-2. Client signs payload using device key
-3. Signed content stored in Solid Pod
-4. Verifiers resolve DID and validate signature chain
+Backups are encrypted client-side.
 
----
-
-## 4. Storage Layer (Solid Pods)
-
-Each user owns a Solid Pod that stores:
-
-* Content (posts, media)
-* Social graph
-* Signed interactions
-* Profile data
-* Encrypted key backups
-* Optional AI agent memory
-
-Pods are accessed via URLs referenced in the DID Document.
-
-Pods are fully migratable.
+GreyThing never receives usable private keys.
 
 ---
 
-## 5. Discovery Layer
+# 4. Storage Layer
 
-### 5.1 Event Streams
+GreyThing uses **portable storage endpoints**.
 
-GreyThing uses **short-lived event streams** for discovery.
+Storage characteristics:
 
-Events may include:
+- content-addressed objects
+- cryptographic signatures
+- provider-independent
+- fully migratable
 
-* New post
-* New comment
-* Profile update
+Objects may include:
 
-Events:
+- content blobs
+- encrypted message attachments
+- signed grants
+- application data
 
-* Have a limited TTL
-* Do not contain full content
-* Reference authoritative pod URLs
-
----
-
-### 5.2 Index Providers
-
-Any party may operate:
-
-* Feed indexers
-* Search services
-* Topic aggregators
-
-Index providers subscribe to event streams and build their own indexes.
-
-Users choose which providers to trust.
+Storage endpoints are referenced from the DID document.
 
 ---
 
-## 6. Intelligence Layer (AI Agents)
+# 5. Capability Grants
 
-AI agents are external services that operate via permissions.
+GreyThing uses **capability-based access control**.
+
+A capability grant is a signed object that authorizes access to a resource.
+
+Example structure:
+type: gt.grant.v1
+issuer: DID
+subject: DID
+resource: blob hash
+perm: ["read"]
+expiresAt: timestamp
+signature: Ed25519
+
+
+Grants allow permissions to be:
+
+- explicit
+- verifiable
+- portable across services
+
+This differs from server-side ACL systems.
+
+Permissions travel with the request.
+
+---
+
+# 6. Service Layer
+
+Applications interact with GreyThing through open protocols.
+
+Services may include:
+
+- messaging systems
+- social feeds
+- publishing tools
+- marketplaces
+- AI agents
+
+Services retrieve **user-authorized data** rather than owning it.
+
+---
+
+# 7. Messaging (Reference Application)
+
+GreyThing includes a **reference messaging implementation**.
+
+Messaging demonstrates how the architecture works in practice.
+
+Features:
+
+- end-to-end encrypted messages
+- encrypted attachments
+- attachments stored in user storage
+- capability grants controlling access
+
+Messaging is a **demonstration application**, not the core infrastructure.
+
+---
+
+# 8. AI Agents
+
+AI agents are treated as **protocol clients**.
 
 Agents may:
 
-* Read user content
-* Write recommendations
-* Curate feeds
-* Store memory in user pods
+- read authorized content
+- generate recommendations
+- curate feeds
+- assist users
 
-Agents do not own data and can be replaced at any time.
+Agents interact with user data through:
 
----
+- capability grants
+- open protocols
+- user-approved permissions
 
-## 7. Request Flow Examples
-
-### 7.1 Reading a User Profile
-
-1. Client resolves user DID
-2. Retrieves DID Document
-3. Reads profile service endpoint
-4. Fetches profile from Solid Pod
+Agents are replaceable services.
 
 ---
 
-### 7.2 Publishing Content
+# 9. WordPress Nodes
 
-1. Client signs content
-2. Stores content in Solid Pod
-3. Emits discovery event
-4. Indexers update feeds
+GreyThing includes a WordPress plugin that allows websites to:
 
----
+- host DID documents
+- operate storage endpoints
 
-### 7.3 Pod Migration
+This demonstrates how existing web infrastructure can participate in decentralized identity and storage systems.
 
-1. User copies data to new pod provider
-2. Updates service endpoints in DID Document
-3. Indexers re-resolve DID
-4. New pod becomes authoritative
+> GreyThing turns ordinary websites into identity and storage nodes.
 
 ---
 
-## 8. Trust Boundaries
+# 10. Example Request Flow
 
-GreyThing is trusted for:
+## Reading User Data
 
-* DID Document availability
-* Infrastructure correctness
-
-GreyThing is NOT trusted for:
-
-* Key custody
-* Content integrity
-* Identity recovery alone
-
-Trust is minimized and explicit.
+1. Resolve user DID
+2. Retrieve DID Document
+3. Discover storage endpoint
+4. Fetch resource with optional capability grant
 
 ---
 
-## 9. Failure Modes
+## Sending a Message Attachment
 
-### 9.1 Pod Compromise
+1. Encrypt file client-side
+2. Upload encrypted blob to storage
+3. Create capability grant for recipient
+4. Send encrypted message referencing blob
 
-* Content confidentiality may be affected
-* Identity remains secure
-* Keys are not exposed
+Recipient:
 
----
-
-### 9.2 GreyThing Unavailable
-
-* Existing pods continue functioning
-* Identities can be migrated
-* No central dependency remains
+1. Decrypt message
+2. Fetch blob using grant
+3. Decrypt attachment
 
 ---
 
-## 10. Summary
+## Storage Migration
 
-GreyThing architecture separates:
+1. Copy data to new storage endpoint
+2. Update DID service endpoint
+3. Clients resolve updated DID
+4. New storage becomes authoritative
 
-* identity from storage
-* storage from discovery
-* discovery from intelligence
+---
 
-This separation enables:
+# 11. Trust Model
 
-* portability
-* competition
-* long-term resilience
+GreyThing minimizes trusted components.
 
-GreyThing provides infrastructure, not control.
+GreyThing infrastructure is trusted only for:
+
+- DID document availability
+- protocol correctness
+
+GreyThing is **not trusted for**:
+
+- key custody
+- content integrity
+- user permissions
+
+Security is based on cryptographic verification.
+
+---
+
+# 12. Failure Modes
+
+## Storage Provider Failure
+
+Users may migrate to another storage provider.
+
+Identity remains intact.
+
+---
+
+## GreyThing Bootstrap Service Failure
+
+Users may migrate their DID hosting to another domain.
+
+Identity continuity is preserved.
+
+---
+
+# 13. Design Goals
+
+GreyThing architecture aims to provide:
+
+- portable identity
+- user-owned storage
+- verifiable access control
+- protocol interoperability
+- replaceable services
+- long-term resilience
+
+---
+
+# 14. Summary
+
+GreyThing separates:
+
+- identity
+- storage
+- access control
+- services
+
+This enables a protocol-based architecture where:
+identity = root key
+storage = user owned
+permissions = capability grants
+services = data consumers
+
+
+GreyThing provides infrastructure, not platforms.

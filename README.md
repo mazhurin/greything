@@ -1,189 +1,256 @@
 # GreyThing
 
-**GreyThing** is a decentralized social network focused on **user-owned identity**, **portable data**, and **replaceable intelligence**.
+**GreyThing** is an experimental open infrastructure project for **portable identity**, **user-owned storage**, and **capability-based data access**.
 
-GreyThing is not a platform that owns users.
-It is infrastructure that helps users connect — without lock‑in.
+GreyThing explores a shift:
 
----
+> **From platforms to protocols: letting users own identity and data.**
 
-## Why GreyThing
-
-Today’s social networks:
-
-* own user identities
-* lock data inside centralized databases
-* monetize attention and behavior
-* cannot be left without losing social history
-
-GreyThing takes a different approach:
-
-> **Users own themselves. Platforms provide services, not control.**
+Instead of platforms owning user identities and data, GreyThing investigates an architecture where users control their identity and storage while services interact with that data through open protocols.
 
 ---
 
-## Core Ideas
+# Why GreyThing
 
-* **Portable identity** — users are identified by DIDs, not accounts
-* **User-owned data** — content lives in personal Solid Pods
-* **No lock-in** — storage, feeds, and AI can be replaced
-* **Pluggable intelligence** — AI agents compete, users choose
-* **Web2 UX, Web3 guarantees** — decentralization without friction
+Today’s online platforms tightly couple:
 
----
+- identity
+- data storage
+- permissions
+- application logic
 
-## Architecture at a Glance
+This creates platform lock-in: users cannot migrate identity or data without losing their social history.
 
-GreyThing is built from four independent layers:
+GreyThing explores an alternative architecture:
 
-1. **Identity layer** — Decentralized Identifiers (DID)
-2. **Storage layer** — Solid Pods
-3. **Discovery layer** — Event streams & indexes
-4. **Intelligence layer** — External AI agents
-
-Each layer can evolve independently.
+- identity is **portable**
+- data is **user-owned**
+- permissions are **cryptographic capabilities**
+- services become **data consumers rather than data owners**
 
 ---
 
-## Identity (DID)
+# Core Concepts
 
-* GreyThing provides **free DID hosting** at project start
-* DID method: `did:web`
-* Example:
+GreyThing is built around four architectural principles:
 
-  ```
-  did:web:greything.com:users:alice
-  ```
+### Portable Identity
 
-GreyThing hosts **only DID Documents**:
+Users are identified by **Decentralized Identifiers (DIDs)** anchored in cryptographic root keys.
 
-* public keys
-* service endpoints
+Identity continuity does not depend on a domain or platform account.
 
-GreyThing **never stores**:
-
-* private keys
-* user content
-
-Users can later migrate their identity to their own domain.
+This allows **cross-domain identity migration**.
 
 ---
 
-## Data & Storage (Solid Pods)
+### User-Owned Storage
 
-Each user owns a **Solid Pod** containing:
+User data is stored in **portable storage endpoints**.
 
-* posts and media
-* social graph
-* signed likes and comments
-* profile data
-* encrypted key backups
+Objects are:
 
-Pods are:
+- content-addressed
+- cryptographically signed
+- independent from applications
 
-* provider-independent
-* fully migratable
-* controlled by the user
+Users can migrate storage providers without losing data.
 
 ---
 
-## Discovery
+### Capability-Based Access
 
-GreyThing does not rely on a single global feed.
+Access to data is controlled through **signed capability grants**.
 
-Discovery is handled via:
+A grant is a small cryptographic object authorizing:
+* who can access
+* which resource
+* for how long
 
-* short-lived event streams (TTL-based)
-* optional peer-to-peer discovery
-* competing feed and search providers
-* social discovery through follows
 
-Anyone can build a feed or indexer.
-
----
-
-## AI Agents
-
-AI agents are **external services**, not part of the core platform.
-
-They can:
-
-* curate feeds
-* recommend content and users
-* filter spam and abuse
-* assist with publishing
-
-Agents operate via explicit permissions and can be replaced at any time.
+Grants can be transmitted alongside requests and verified independently.
 
 ---
 
-## Security & Keys (High Level)
+### Services as Data Consumers
 
-* Private keys are generated and used **client-side only**
-* GreyThing never sees signing keys
-* Solid Pods may store **encrypted backups**, never usable keys
-* Identity recovery is opt-in and multi-party
+In GreyThing:
+services do not own user data
 
----
+Instead:
+services retrieve user-authorized data from user-controlled storage via open protocols
 
-## Monetization
 
-GreyThing does **not monetize identity**.
-
-Free:
-
-* basic DID hosting
-* basic Solid Pod storage
-
-Paid services include:
-
-* additional storage and bandwidth
-* SLA-backed DID hosting
-* custom domain identities
-* advanced recovery services
-* enterprise and organization accounts
-
-Users pay for **resources and convenience**, not existence.
+This model also enables interactions with **automated agents and AI systems**.
 
 ---
 
-## Project Status
+# Architecture Overview
 
-GreyThing is an **early-stage project**.
+Traditional platforms:
+identity ─┐
+data      ├─► platform owns storage + permissions + APIs
+access    ┘
+
+GreyThing architecture:
+identity (DID anchored in root key)
+│
+├─► user-owned storage
+│
+├─► capability grants (signed permissions)
+│
+└─► services & AI agents consume authorized data
+
+
+---
+
+# Identity
+
+GreyThing currently uses the **did:web** method.
+
+Example:
+did:web:did.greything.com:u:alice
+
+
+DID documents contain:
+
+- public keys
+- service endpoints
+
+GreyThing hosts only **public identity documents**.
+
+GreyThing never stores:
+
+- private keys
+- user content
+
+Users can migrate their identity to another domain without changing the identity itself.
+
+---
+
+# Storage
+
+GreyThing uses **portable storage endpoints**.
+
+Storage characteristics:
+
+- content-addressed objects
+- cryptographic signatures
+- provider-independent
+- migratable
+
+Storage endpoints can be operated by:
+
+- individuals
+- hosting providers
+- organizations
+- websites
+
+---
+
+# WordPress Integration
+
+GreyThing includes a **WordPress plugin** that allows websites to:
+
+- host DID documents
+- operate GreyThing storage endpoints
+
+This demonstrates how existing web infrastructure can participate in decentralized identity and storage systems.
+
+> **GreyThing turns ordinary websites into identity and storage nodes.**
+
+---
+
+# Messaging (Demonstration Application)
+
+GreyThing includes a **reference messaging implementation** that demonstrates how the architecture works.
+
+Features:
+
+- end-to-end encrypted messages
+- encrypted attachments
+- attachments stored in user storage
+- access controlled through capability grants
+
+Messaging is implemented as a **demonstration application** for the underlying infrastructure.
+
+---
+
+# AI Agents
+
+GreyThing treats **AI agents as external protocol clients**.
+
+Agents may:
+
+- curate feeds
+- recommend content
+- filter spam
+- assist with publishing
+
+Agents interact with user-authorized data through **capability grants and open protocols**.
+
+Agents are **replaceable services**, not platform components.
+
+---
+
+# Security Model (High Level)
+
+GreyThing uses well-established cryptographic primitives:
+
+- Ed25519 for signatures
+- X25519 for key exchange
+- AES-GCM for encryption
+
+Private keys are generated and used **client-side only**.
+
+Servers never see signing keys.
+
+Storage endpoints may store **encrypted backups**, never usable keys.
+
+---
+
+# Design Principles
+
+GreyThing follows several design principles:
+
+- **portable identity**
+- **user-owned storage**
+- **capability-based access**
+- **protocol-first architecture**
+- **interoperability between services**
+- **replaceable intelligence**
+
+---
+
+# Project Status
+
+GreyThing is an **early-stage experimental infrastructure project**.
 
 Current focus:
 
-* architecture
-* security model
-* developer experience
-
-This repository documents the design and direction of the project.
-
----
-
-## Philosophy
-
-GreyThing is infrastructure.
-
-It does not:
-
-* own user data
-* control social graphs
-* lock users into proprietary systems
-
-If GreyThing disappears, users keep:
-
-* their identity
-* their data
-* their relationships
+- architecture validation
+- protocol design
+- reference implementation
+- developer documentation
 
 ---
 
-## Learn More
+# Vision
 
-* See **GREYTHING.md** for the full project vision and architecture
-* Additional documents will cover threat models, recovery flows, and APIs
+GreyThing explores an internet architecture where:
+
+- users remain custodians of their identity and data
+- services interact with user-authorized data
+- platforms become replaceable protocol clients
+
+Such architectures may contribute to a more open and resilient internet where identity and data remain under user control.
 
 ---
 
-> **Build social networks like the web itself: open, portable, and replaceable.**
+# License
+
+GreyThing is developed as open infrastructure and will be released as **free and open-source software**.
+
+---
+
+> Build social systems like the web itself: open, portable, and replaceable.
