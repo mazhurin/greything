@@ -1,5 +1,13 @@
 # GreyThing Architecture
 
+GreyThing explores protocols where identity is anchored in cryptographic root keys and data is stored in user-controlled endpoints, allowing services and agents to access user-authorized data through capability-based mechanisms.
+
+Instead of server-side access control policies, GreyThing uses signed capability grants that travel with data access requests and can be independently verified.
+
+* Identity belongs to users.  
+* Data lives in user-owned storage.  
+* Services access it through capability-based protocols.
+
 This document describes the **technical architecture** of GreyThing and how its main components interact.
 
 GreyThing explores a shift:
@@ -117,6 +125,17 @@ Backups are encrypted client-side.
 
 GreyThing never receives usable private keys.
 
+## 3.4 Identity Lifecycle: Revocation and Recovery
+
+Portability must survive device loss and key compromise.
+
+GreyThing supports three lifecycle mechanisms:
+
+1. **Device key revocation** — device/session keys are delegated and can be revoked by updating the DID document.
+2. **Optional passphrase recovery** — an encrypted root key backup can be stored in user-controlled storage and recovered using a passphrase.
+3. **Guardian DIDs (future)** — a user can designate trusted DIDs as guardians and require a threshold of guardian approvals to rotate the root key after loss.
+
+This makes identity portability durable rather than fragile.
 ---
 
 # 4. Storage Layer

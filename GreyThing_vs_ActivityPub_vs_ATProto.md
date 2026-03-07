@@ -31,7 +31,7 @@ GreyThing solves a **different class of problems**.
 > A social network is a replicated cryptographic network.
 
 **GreyThing**
-> A social network is a set of signed, user-owned data objects.
+> Identity and data are signed, user-owned objects.
 > Everything else (feeds, discovery, moderation, AI) is derivative.
 
 This single assumption drives all other design choices.
@@ -242,4 +242,4 @@ This incompatibility is intentional.
 
 ## One-sentence definition
 
-**GreyThing is a protocol where social networks are products built on top of signed data — not places where data lives.**
+**GreyThing is protocol infrastructure where applications are products built on top of signed, user-owned data — not platforms that own data.**

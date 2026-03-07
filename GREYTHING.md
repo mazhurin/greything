@@ -1,8 +1,8 @@
-# GreyThing — Decentralized Social Network
+# GreyThing — Protocol Infrastructure for Portable Identity and User-Owned Data
 
 ## 1. Vision
 
-GreyThing is a decentralized social network built around **user-owned data**, **portable identity**, and **pluggable intelligence**.
+GreyThing is an experimental infrastructure project exploring protocols for **portable identity**, **user-owned storage**, and **capability-based data access**.
 
 Our core belief:
 

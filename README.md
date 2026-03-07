@@ -1,4 +1,16 @@
-# GreyThing
+# GreyThing  
+### Protocols for portable identity and capability-based access to user-owned data
+
+Status: **experimental protocol and reference implementation**
+Protocol version: draft-v1
+Specifications: see `/spec`
+Reference implementation: this repository
+
+GreyThing explores protocols where identity is anchored in cryptographic root keys and data is stored in user-controlled storage endpoints, allowing services and agents to access user-authorized data through capability-based mechanisms.
+
+* **Identity belongs to users and can move across domains and providers.**
+* **Data lives in user-owned storage and moves with the user across providers.**
+* **Services and agents access user-authorized data through capability-based protocols.**
 
 **GreyThing** is an experimental open infrastructure project for **portable identity**, **user-owned storage**, and **capability-based data access**.
 
@@ -28,11 +40,22 @@ GreyThing explores an alternative architecture:
 - permissions are **cryptographic capabilities**
 - services become **data consumers rather than data owners**
 
+identity (DID)
+      │
+      ▼
+user-owned storage
+      │
+      ▼
+capability grants
+      │
+      ▼
+services / AI agents
+
 ---
 
 # Core Concepts
 
-GreyThing is built around four architectural principles:
+GreyThing is built around five architectural principles:
 
 ### Portable Identity
 
@@ -42,6 +65,16 @@ Identity continuity does not depend on a domain or platform account.
 
 This allows **cross-domain identity migration**.
 
+### Durable Identity (Revocation & Recovery)
+
+Portability must survive device loss.
+
+GreyThing supports:
+- device key rotation and revocation via DID updates
+- optional passphrase-protected root key backups
+- future guardian-based recovery using **Guardian DIDs** (threshold approvals)
+
+Portable identity is only meaningful if it is recoverable.
 ---
 
 ### User-Owned Storage
@@ -78,7 +111,7 @@ In GreyThing:
 services do not own user data
 
 Instead:
-services retrieve user-authorized data from user-controlled storage via open protocols
+services retrieve user-authorized data from user-owned storage via open protocols
 
 
 This model also enables interactions with **automated agents and AI systems**.
@@ -213,14 +246,24 @@ Storage endpoints may store **encrypted backups**, never usable keys.
 
 GreyThing follows several design principles:
 
-- **portable identity**
-- **user-owned storage**
-- **capability-based access**
-- **protocol-first architecture**
-- **interoperability between services**
-- **replaceable intelligence**
+- **portable identity** — anchored in cryptographic keys, not domains
+- **durable identity** — key rotation, revocation and recovery ensure identities survive device loss
+- **user-owned storage** — migratable across providers
+- **capability-based access** — signed grants authorize access to specific resources
+- **protocol-first architecture** — open specifications designed for reuse across applications
+- **services as consumers** — services and agents retrieve user-authorized data rather than owning it
 
 ---
+
+## Specifications
+
+GreyThing protocol specifications are documented in the `/spec` directory.
+
+- Identity model
+- Storage interaction
+- Capability grants
+- Identity discovery (claims)
+- Messaging reference implementation
 
 # Project Status
 

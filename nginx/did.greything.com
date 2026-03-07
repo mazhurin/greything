@@ -5,6 +5,7 @@ server {
     root /var/www/did;
     default_type application/json;
     add_header Cache-Control "public, max-age=300";
+    add_header Access-Control-Allow-Origin "*" always;
     try_files $uri =404;
   }
 
@@ -12,6 +13,7 @@ server {
     root /var/www/did;
     default_type application/json;
     add_header Cache-Control "public, max-age=3600";
+    add_header Access-Control-Allow-Origin "*" always;
     try_files $uri =404;
   }
 
