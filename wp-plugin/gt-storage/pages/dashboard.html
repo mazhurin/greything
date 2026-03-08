@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GreyThing Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    h1 { color: #fff; margin: 0; }
+    h2 { color: #fff; margin: 0 0 16px 0; font-size: 20px; }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-did {
+      font-family: monospace;
+      font-size: 11px;
+      color: #4a9eff;
+      word-break: break-all;
+      max-width: 300px;
+      text-decoration: none;
+    }
+    .header-did:hover { text-decoration: underline; }
+    .header-user-info {
+      text-align: right;
+    }
+    .tagline {
+      color: #888;
+      font-size: 15px;
+      margin: -20px 0 32px 60px;
+    }
+    .card {
+      background: #2a2a2a;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+    label:first-child { margin-top: 0; }
+    input[type="text"], input[type="tel"], textarea {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: inherit;
+    }
+    input[type="file"] {
+      color: #888;
+      font-size: 14px;
+    }
+    input::placeholder, textarea::placeholder { color: #555; }
+    textarea { resize: vertical; min-height: 60px; }
+    button {
+      padding: 10px 24px;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #4a9eff;
+      color: #fff;
+      margin-top: 16px;
+    }
+    button:hover { background: #3a8eef; }
+    button:disabled {
+      background: #444;
+      color: #888;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #3a3a3a;
+      color: #ccc;
+    }
+    .btn-secondary:hover { background: #4a4a4a; }
+    .btn-small {
+      padding: 6px 14px;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .btn-inline {
+      margin-top: 0;
+      vertical-align: middle;
+    }
+    .mono {
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      color: #4a9eff;
+    }
+    .error { color: #f88; margin-top: 8px; }
+    .success { color: #8f8; margin-top: 8px; }
+    .progress-step {
+      padding: 4px 0;
+      font-size: 14px;
+      color: #888;
+    }
+    .progress-step.ok { color: #8f8; }
+    .progress-step.fail { color: #f88; }
+    .progress-step.running { color: #ff8; }
+    .saved-key-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .saved-key-info span { color: #8f8; font-size: 13px; }
+    .saved-key-info button { margin-top: 0; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #333;
+    }
+    .tab {
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #888;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      margin-top: 0;
+    }
+    .tab:hover { color: #ccc; background: none; }
+    .tab.active {
+      color: #fff;
+      border-bottom-color: #4a9eff;
+      background: none;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .empty { color: #666; font-style: italic; margin-top: 12px; }
+
+    /* Claims table (read-only profile) */
+    .claims-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .claims-table td {
+      padding: 3px 8px;
+      font-size: 14px;
+      vertical-align: top;
+    }
+    .claims-table td:first-child {
+      color: #888;
+      width: 120px;
+      white-space: nowrap;
+    }
+
+    /* Messages */
+    .msg-bubble {
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      max-width: 85%;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .msg-bubble.out {
+      background: #1a3a5c;
+      margin-left: auto;
+    }
+    .msg-bubble.in {
+      background: #2a2a2a;
+    }
+    .msg-time {
+      font-size: 11px;
+      color: #666;
+      margin-top: 2px;
+    }
+    .msg-verify {
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    .msg-verify.ok { color: #8f8; }
+    .msg-verify.fail { color: #f88; }
+    .convo-card {
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .convo-card:hover {
+      background: #333;
+    }
+    .convo-preview {
+      color: #888;
+      font-size: 13px;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .convo-time {
+      color: #666;
+      font-size: 12px;
+      float: right;
+    }
+    .attachment-list {
+      margin-top: 6px;
+      padding: 0;
+      list-style: none;
+    }
+    .attachment-list li {
+      font-size: 12px;
+      padding: 3px 0;
+    }
+    .attachment-list a {
+      color: #4a9eff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .attachment-list a:hover { text-decoration: underline; }
+    .attachment-list .att-size {
+      color: #666;
+      margin-left: 4px;
+    }
+    .file-attach-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .file-attach-row input[type="file"] {
+      font-size: 12px;
+    }
+    .attached-files {
+      font-size: 12px;
+      color: #8f8;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== LOGGED OUT ===== -->
+  <div id="view-home">
+    <div class="header">
+      <a href="/" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit;">
+        <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <g fill="#e0e0e0">
+            <rect x="18" y="12" width="10" height="40" rx="3"/>
+            <rect x="36" y="12" width="10" height="40" rx="3"/>
+          </g>
+        </svg>
+        <h1>GreyThing</h1>
+      </a>
+    </div>
+    <p class="tagline">Own your identity. Own your data.</p>
+
+    <!-- Sign In -->
+    <div style="margin-bottom:32px;">
+      <h2>Sign In</h2>
+      <div class="card">
+        <div id="login-file-area">
+          <label style="margin-top:0;">Select your identity file</label>
+          <input type="file" id="identity-file" accept=".json">
+        </div>
+        <div id="login-saved-area" style="display:none;">
+          <div class="saved-key-info">
+            <span id="saved-identity-label"></span>
+            <button class="btn-secondary btn-small" id="btn-use-different">Use different file</button>
+          </div>
+        </div>
+        <!-- Fallback: user ID input for old single-key files -->
+        <div id="login-userid-fallback" style="display:none; margin-top:12px;">
+          <label>User ID (required for old key format)</label>
+          <input type="text" id="fallback-user-id" placeholder="e.g. ab3x9kqp" autocomplete="off">
+        </div>
+      </div>
+      <button id="btn-login">Sign In</button>
+      <div id="login-error" class="error" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ===== LOGGED IN (DASHBOARD) ===== -->
+  <div id="view-dashboard" style="display:none;">
+    <div class="header">
+      <a href="/" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit;">
+        <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <g fill="#e0e0e0">
+            <rect x="18" y="12" width="10" height="40" rx="3"/>
+            <rect x="36" y="12" width="10" height="40" rx="3"/>
+          </g>
+        </svg>
+        <h1>GreyThing</h1>
+      </a>
+      <div class="header-right">
+        <div class="header-user-info">
+          <div id="dash-user-name" style="color:#fff; font-size:14px;"></div>
+          <div><a id="dash-did-url" class="header-did" href="" target="_blank"></a></div>
+        </div>
+        <button class="btn-secondary btn-small" id="btn-logout">Sign Out</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="messages">Messages</button>
+      <button class="tab" data-tab="profile">Profile</button>
+    </div>
+
+    <!-- Messages Tab -->
+    <div class="tab-panel active" id="tab-messages">
+      <!-- X25519 key required banner (fallback for old key files without X25519) -->
+      <div id="msg-key-needed" style="display:none;">
+        <div class="card">
+          <p style="color:#ff8; margin:0 0 8px 0;">X25519 key not found. Load your X25519 key file to enable messages.</p>
+          <input type="file" id="x25519-key-file" accept=".json">
+          <div id="x25519-key-error" class="error" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Main messages UI (hidden until key loaded) -->
+      <div id="msg-main" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="margin:0;">Messages</h2>
+          <button class="btn-small" id="btn-new-msg">New Message</button>
+        </div>
+
+        <!-- Compose panel (hidden by default) -->
+        <div id="msg-compose" class="card" style="display:none; margin-bottom:16px;">
+          <label style="margin-top:0;">To (DID)</label>
+          <input type="text" id="msg-to" placeholder="e.g. did:web:did.greything.com:u:ab3x9kqp" autocomplete="off">
+          <label>Message</label>
+          <textarea id="msg-text" placeholder="Type your message..."></textarea>
+          <div class="file-attach-row">
+            <input type="file" id="msg-attach-file" multiple>
+          </div>
+          <div id="msg-attach-info" class="attached-files"></div>
+          <div style="display:flex; gap:8px;">
+            <button id="btn-send-msg">Send</button>
+            <button class="btn-secondary" id="btn-cancel-msg">Cancel</button>
+          </div>
+          <div id="msg-send-progress" style="margin-top:8px;"></div>
+        </div>
+
+        <!-- Inbox refresh -->
+        <div style="margin-bottom:16px;">
+          <button class="btn-secondary btn-small" id="btn-refresh-inbox">Check Inbox</button>
+          <span id="inbox-status" style="color:#888; font-size:13px; margin-left:8px;"></span>
+        </div>
+
+        <!-- Conversation list -->
+        <div id="msg-conversations"></div>
+
+        <!-- Active conversation thread -->
+        <div id="msg-thread" style="display:none;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <button class="btn-secondary btn-small" id="btn-back-convos">&larr; Back</button>
+            <span id="msg-thread-peer" class="mono" style="font-size:13px;"></span>
+          </div>
+          <div id="msg-thread-messages"></div>
+          <div class="card" style="margin-top:12px;">
+            <textarea id="msg-reply-text" placeholder="Reply..." style="min-height:40px;"></textarea>
+            <div class="file-attach-row">
+              <input type="file" id="msg-reply-attach-file" multiple>
+            </div>
+            <div id="msg-reply-attach-info" class="attached-files"></div>
+            <button class="btn-small" id="btn-send-reply">Send</button>
+            <div id="msg-reply-progress" style="margin-top:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Tab -->
+    <div class="tab-panel" id="tab-profile">
+      <h2>Public Claims</h2>
+      <p style="color:#888; font-size:14px; margin-top:0;">Edit your public profile. All fields are optional.</p>
+      <div class="card">
+        <label>Name</label>
+        <input type="text" id="edit-name" placeholder="Alice">
+        <label>Family name</label>
+        <input type="text" id="edit-familyname" placeholder="Smith">
+        <label>Nickname</label>
+        <input type="text" id="edit-nickname" placeholder="ali">
+        <label>City</label>
+        <input type="text" id="edit-city" placeholder="London">
+        <label>Country</label>
+        <input type="text" id="edit-country" placeholder="UK">
+        <label>Alma mater</label>
+        <input type="text" id="edit-alma_mater" placeholder="University">
+        <label>About</label>
+        <textarea id="edit-about" placeholder="A few words about yourself"></textarea>
+        <label>Keywords</label>
+        <input type="text" id="edit-keywords" placeholder="developer, crypto, music">
+        <label>Email (stored as hash only)</label>
+        <input type="text" id="edit-email" placeholder="alice@example.com">
+        <label>Phone (stored as hash only)</label>
+        <input type="tel" id="edit-phone" placeholder="+1234567890">
+      </div>
+      <button id="btn-save">Save Claims</button>
+      <div id="save-progress" style="margin-top:16px;"></div>
+      <div id="save-error" class="error" style="display:none;"></div>
+      <div id="save-success" class="success" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    // ========== Config ==========
+    // No hardcoded DID_DOMAIN — derived from identity file's DID
+    const LS_IDENTITY_PREFIX = 'gt_identity_';
+    const LS_LAST_DID = 'gt_last_did';
+    const LS_X25519_PREFIX = 'gt_key_x25519_';
+
+    // ========== State ==========
+    let didStr = '';
+    let signingKey = null;
+    let currentHeadHash = '';
+    let myStorageURL = '';
+    let myDIDDocURL = '';
+
+    // ========== Base58 ==========
+    const B58_ALPHA = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    function base58Encode(bytes) {
+      let num = 0n;
+      for (const b of bytes) num = num * 256n + BigInt(b);
+      let s = '';
+      while (num > 0n) { s = B58_ALPHA[Number(num % 58n)] + s; num = num / 58n; }
+      for (const b of bytes) { if (b === 0) s = '1' + s; else break; }
+      return s || '1';
+    }
+    function base58Decode(s) {
+      let num = 0n;
+      for (const c of s) {
+        const idx = B58_ALPHA.indexOf(c);
+        if (idx < 0) throw new Error('Invalid base58 character: ' + c);
+        num = num * 58n + BigInt(idx);
+      }
+      const hex = num.toString(16);
+      const padded = hex.length % 2 ? '0' + hex : hex;
+      const bytes = [];
+      for (let i = 0; i < padded.length; i += 2) bytes.push(parseInt(padded.slice(i, i+2), 16));
+      for (const c of s) { if (c === '1') bytes.unshift(0); else break; }
+      return new Uint8Array(bytes);
+    }
+
+    // ========== Hex / SHA-256 ==========
+    function hexEncode(bytes) {
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    async function sha256Hex(data) {
+      const buf = await crypto.subtle.digest('SHA-256', data instanceof Uint8Array ? data : new TextEncoder().encode(data));
+      return hexEncode(new Uint8Array(buf));
+    }
+    async function hashBody(bodyBytes) {
+      return 'sha256-' + await sha256Hex(bodyBytes);
+    }
+
+    // ========== Base64URL ==========
+    function base64urlEncode(bytes) {
+      const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      let s = '';
+      for (const b of arr) s += String.fromCharCode(b);
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function base64urlDecode(s) {
+      s = s.replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      const bin = atob(s);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return arr;
+    }
+
+    // ========== Escape HTML ==========
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // ========== Key Import ==========
+    async function importEd25519Key(keyFileJSON) {
+      if (keyFileJSON.kty !== 'Ed25519') throw new Error('Key must be Ed25519, got ' + keyFileJSON.kty);
+      const raw = base64urlDecode(keyFileJSON.privateKeyB64Url);
+      const seed = raw.slice(0, 32);
+      const pub = raw.slice(32, 64);
+      const jwk = {
+        kty: 'OKP', crv: 'Ed25519',
+        d: base64urlEncode(seed),
+        x: base64urlEncode(pub),
+      };
+      const privateKey = await crypto.subtle.importKey('jwk', jwk, 'Ed25519', false, ['sign']);
+      return { privateKey, kid: keyFileJSON.kid, pubMultibase: keyFileJSON.publicKeyMultibase };
+    }
+
+    async function importX25519Key(keyJSON) {
+      if (keyJSON.kty !== 'X25519') throw new Error('Key must be X25519, got ' + keyJSON.kty);
+      const privRaw = base64urlDecode(keyJSON.privateKeyB64Url);
+      const pubRaw = base58Decode(keyJSON.publicKeyMultibase.slice(1));
+      const privJwk = { kty: 'OKP', crv: 'X25519', d: base64urlEncode(privRaw), x: base64urlEncode(pubRaw) };
+      const privateKey = await crypto.subtle.importKey('jwk', privJwk, { name: 'X25519' }, false, ['deriveBits']);
+      const pubJwk = { kty: 'OKP', crv: 'X25519', x: base64urlEncode(pubRaw) };
+      const publicKey = await crypto.subtle.importKey('jwk', pubJwk, { name: 'X25519' }, true, []);
+      return { privateKey, publicKey, pubRaw };
+    }
+
+    // ========== Auth Signature ==========
+    async function signPayload(privateKey, timestamp, method, path, bodyBytes) {
+      const bodyHash = await hashBody(bodyBytes);
+      const payload = `${timestamp}|${method}|${path}|${bodyHash}`;
+      const sig = await crypto.subtle.sign('Ed25519', privateKey, new TextEncoder().encode(payload));
+      return base64urlEncode(new Uint8Array(sig));
+    }
+
+    async function authFetch(url, method, body, extraHeaders) {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
+      const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+      const hasBody = method !== 'GET' && method !== 'HEAD' && method !== 'DELETE';
+      const bodyBytes = hasBody ? (body instanceof Uint8Array ? body : new TextEncoder().encode(body || '')) : new Uint8Array(0);
+      const sig = await signPayload(signingKey.privateKey, timestamp, method, path, bodyBytes);
+
+      const headers = {
+        'X-GT-DID': didStr,
+        'X-GT-Timestamp': timestamp,
+        'X-GT-Signature': sig,
+      };
+      if (hasBody && typeof body === 'string') headers['Content-Type'] = 'application/json';
+      if (extraHeaders) Object.assign(headers, extraHeaders);
+
+      return fetch(url, { method, headers, body: hasBody ? bodyBytes : undefined });
+    }
+
+    // ========== LocalStorage ==========
+    function saveIdentityToStorage(did, identityJSON) {
+      try {
+        localStorage.setItem(LS_IDENTITY_PREFIX + did, JSON.stringify(identityJSON));
+        localStorage.setItem(LS_LAST_DID, did);
+      } catch (e) {}
+    }
+    function loadIdentityFromStorage(did) {
+      try {
+        const s = localStorage.getItem(LS_IDENTITY_PREFIX + did);
+        return s ? JSON.parse(s) : null;
+      } catch (e) { return null; }
+    }
+    function clearIdentityFromStorage(did) {
+      localStorage.removeItem(LS_IDENTITY_PREFIX + did);
+      localStorage.removeItem(LS_LAST_DID);
+    }
+
+    // ========== DID Parsing ==========
+    function parseDID(did) {
+      if (!did.startsWith('did:web:')) throw new Error('Unsupported DID method: ' + did);
+      const parts = did.substring(8).split(':');
+      const domain = decodeURIComponent(parts[0]);
+      let docURL;
+      if (parts.length === 1) {
+        docURL = `https://${domain}/.well-known/did.json`;
+      } else {
+        docURL = `https://${domain}/${parts.slice(1).join('/')}/did.json`;
+      }
+      return { didStr: did, didDocURL: docURL, domain };
+    }
+
+    // ========== Resolve DID document via did:web ==========
+    async function resolveDIDDocument(did) {
+      const parsed = parseDID(did);
+      const resp = await fetch(parsed.didDocURL, { cache: 'no-store' });
+      if (!resp.ok) throw new Error('Cannot resolve DID: ' + resp.status);
+      const ct = resp.headers.get('content-type') || '';
+      if (!ct.includes('json')) {
+        throw new Error('DID document returned non-JSON response for ' + did);
+      }
+      return await resp.json();
+    }
+
+    // ========== Extract storage endpoint from DID document ==========
+    function getStorageEndpoint(doc) {
+      for (const svc of (doc.service || [])) {
+        if (svc.type === 'SolidPod' && svc.serviceEndpoint) {
+          return svc.serviceEndpoint.replace(/\/$/, '');
+        }
+      }
+      return null;
+    }
+
+    // ========== Resolve recipient X25519 public key from DID ==========
+    async function resolveX25519Pub(recipientDID) {
+      const doc = await resolveDIDDocument(recipientDID);
+      const kaRef = doc.keyAgreement && doc.keyAgreement[0];
+      for (const vm of (doc.verificationMethod || [])) {
+        if (vm.type === 'X25519KeyAgreementKey2020' && (!kaRef || vm.id === kaRef)) {
+          const pubBytes = base58Decode(vm.publicKeyMultibase.slice(1));
+          if (pubBytes.length === 32) return { pubBytes, doc };
+        }
+      }
+      throw new Error('No X25519 key found in recipient DID document');
+    }
+
+    // ========== Private Messages ==========
+    let x25519Key = null;
+    let pmManifest = null;
+    let pmHeadHash = '';
+    let currentConvoPeer = '';
+
+    // --- Crypto helpers for PM ---
+    async function deriveAESKey(myPrivKey, theirPubBytes) {
+      const theirPubJwk = { kty: 'OKP', crv: 'X25519', x: base64urlEncode(theirPubBytes) };
+      const theirPubKey = await crypto.subtle.importKey('jwk', theirPubJwk, { name: 'X25519' }, false, []);
+      const sharedBits = await crypto.subtle.deriveBits({ name: 'X25519', public: theirPubKey }, myPrivKey, 256);
+      const sharedSecret = new Uint8Array(sharedBits);
+      const hkdfKey = await crypto.subtle.importKey('raw', sharedSecret, 'HKDF', false, ['deriveKey']);
+      const info = new TextEncoder().encode('greything.pm.v1');
+      return crypto.subtle.deriveKey(
+        { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info },
+        hkdfKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+      );
+    }
+
+    async function encryptForRecipient(plainBytes, recipientPubBytes) {
+      const ephemeral = await crypto.subtle.generateKey({ name: 'X25519' }, true, ['deriveBits']);
+      const ephemPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', ephemeral.publicKey));
+      const aesKey = await deriveAESKey(ephemeral.privateKey, recipientPubBytes);
+      const nonce = crypto.getRandomValues(new Uint8Array(12));
+      const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aesKey, plainBytes));
+      return {
+        type: 'InboxCiphertextV1',
+        alg: 'X25519+HKDF+AES256GCM',
+        ephemeralPubB64: base64urlEncode(ephemPubRaw),
+        nonceB64: base64urlEncode(nonce),
+        ciphertextB64: base64urlEncode(ciphertext),
+      };
+    }
+
+    async function decryptEnvelope(envelope) {
+      const ephemPub = base64urlDecode(envelope.ephemeralPubB64);
+      const nonce = base64urlDecode(envelope.nonceB64);
+      const ciphertext = base64urlDecode(envelope.ciphertextB64);
+      const aesKey = await deriveAESKey(x25519Key.privateKey, ephemPub);
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce }, aesKey, ciphertext);
+      return JSON.parse(new TextDecoder().decode(plain));
+    }
+
+    // --- Canonical JSON ---
+    function canonicalJSON(val) {
+      if (val === null || val === undefined) return 'null';
+      if (typeof val === 'string') return JSON.stringify(val);
+      if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+      if (Array.isArray(val)) return '[' + val.map(v => canonicalJSON(v)).join(',') + ']';
+      if (typeof val === 'object') {
+        const keys = Object.keys(val).sort();
+        return '{' + keys.map(k => JSON.stringify(k) + ':' + canonicalJSON(val[k])).join(',') + '}';
+      }
+      return JSON.stringify(val);
+    }
+
+    async function canonicalizeInner(msg) {
+      let attHash = '';
+      if (msg.attachments && msg.attachments.length > 0) {
+        const attCanonical = canonicalJSON(msg.attachments);
+        attHash = await sha256Hex(new TextEncoder().encode(attCanonical));
+      }
+      return `type=${msg.type}\nid=${msg.id}\nfrom=${msg.from}\nto=${msg.to}\ncreatedAt=${msg.createdAt}\ntext=${msg.text}\nattachments=${attHash}\n`;
+    }
+
+    // --- Attachment encryption ---
+    const ATT_MAGIC = new TextEncoder().encode('GTATT1');
+
+    async function encryptAttachment(fileBytes) {
+      const aesKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+      const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', aesKey));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, fileBytes));
+      const blob = new Uint8Array(ATT_MAGIC.length + iv.length + ciphertext.length);
+      blob.set(ATT_MAGIC, 0);
+      blob.set(iv, ATT_MAGIC.length);
+      blob.set(ciphertext, ATT_MAGIC.length + iv.length);
+      return { encryptedBlob: blob, rawKey };
+    }
+
+    async function decryptAttachment(blobBytes, rawKeyBytes) {
+      const magic = new TextDecoder().decode(blobBytes.slice(0, 6));
+      if (magic !== 'GTATT1') throw new Error('Invalid attachment magic header');
+      const iv = blobBytes.slice(6, 18);
+      const ciphertext = blobBytes.slice(18);
+      const aesKey = await crypto.subtle.importKey('raw', rawKeyBytes, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, ciphertext);
+      return new Uint8Array(plain);
+    }
+
+    async function encryptKeyForRecipient(rawKey, recipientPubBytes) {
+      const ephemeral = await crypto.subtle.generateKey({ name: 'X25519' }, true, ['deriveBits']);
+      const ephemPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', ephemeral.publicKey));
+      const theirPubJwk = { kty: 'OKP', crv: 'X25519', x: base64urlEncode(recipientPubBytes) };
+      const theirPubKey = await crypto.subtle.importKey('jwk', theirPubJwk, { name: 'X25519' }, false, []);
+      const sharedBits = await crypto.subtle.deriveBits({ name: 'X25519', public: theirPubKey }, ephemeral.privateKey, 256);
+      const hkdfKey = await crypto.subtle.importKey('raw', new Uint8Array(sharedBits), 'HKDF', false, ['deriveKey']);
+      const info = new TextEncoder().encode('greything.att.v1');
+      const aesWrapKey = await crypto.subtle.deriveKey(
+        { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info },
+        hkdfKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt']
+      );
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesWrapKey, rawKey));
+      return { v: 1, epk: base64urlEncode(ephemPubRaw), iv: base64urlEncode(iv), ct: base64urlEncode(ct) };
+    }
+
+    async function decryptKeyFromSender(encryptedKey) {
+      const ephemPub = base64urlDecode(encryptedKey.epk);
+      const iv = base64urlDecode(encryptedKey.iv);
+      const ct = base64urlDecode(encryptedKey.ct);
+      const theirPubJwk = { kty: 'OKP', crv: 'X25519', x: base64urlEncode(ephemPub) };
+      const theirPubKey = await crypto.subtle.importKey('jwk', theirPubJwk, { name: 'X25519' }, false, []);
+      const sharedBits = await crypto.subtle.deriveBits({ name: 'X25519', public: theirPubKey }, x25519Key.privateKey, 256);
+      const hkdfKey = await crypto.subtle.importKey('raw', new Uint8Array(sharedBits), 'HKDF', false, ['deriveKey']);
+      const info = new TextEncoder().encode('greything.att.v1');
+      const aesWrapKey = await crypto.subtle.deriveKey(
+        { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info },
+        hkdfKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt']
+      );
+      const rawKey = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesWrapKey, ct);
+      return new Uint8Array(rawKey);
+    }
+
+    // --- Grant creation ---
+    async function createSignedGrant(blobHash, recipientDID) {
+      const now = new Date();
+      const notBefore = now.toISOString().replace(/\.\d{3}Z$/, 'Z');
+      const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const expiresAt = expires.toISOString().replace(/\.\d{3}Z$/, 'Z');
+      const nonceBytes = crypto.getRandomValues(new Uint8Array(12));
+      const nonce = base64urlEncode(nonceBytes);
+      const grant = {
+        type: 'gt.grant.v1',
+        issuer: didStr,
+        subject: recipientDID,
+        resource: { kind: 'blob', hash: blobHash },
+        perm: ['read'],
+        notBefore, expiresAt, nonce,
+      };
+      const canonical = canonicalJSON(grant);
+      const canonBytes = new TextEncoder().encode(canonical);
+      const sig = await crypto.subtle.sign('Ed25519', signingKey.privateKey, canonBytes);
+      grant.sig = {
+        alg: 'Ed25519',
+        kid: didStr + '#' + signingKey.kid,
+        value: base64urlEncode(new Uint8Array(sig)),
+      };
+      return grant;
+    }
+
+    async function uploadGrant(grant) {
+      const grantJSON = JSON.stringify(grant);
+      const resp = await authFetch(`${myStorageURL}/gt/v1/${didStr}/grants`, 'POST', grantJSON);
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error('Failed to upload grant: ' + resp.status + ' ' + errText);
+      }
+      const result = await resp.json();
+      return result.grantHash;
+    }
+
+    // --- Upload encrypted attachment blob ---
+    async function uploadAttachment(file, recipientPubBytes, recipientDID) {
+      const fileBytes = new Uint8Array(await file.arrayBuffer());
+      const { encryptedBlob, rawKey } = await encryptAttachment(fileBytes);
+      const blobHex = await sha256Hex(encryptedBlob);
+      const blobHash = 'sha256-' + blobHex;
+      const putResp = await authFetch(
+        `${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${blobHex}`, 'PUT', encryptedBlob
+      );
+      if (!putResp.ok && putResp.status !== 409) {
+        throw new Error('Failed to upload attachment blob: ' + putResp.status);
+      }
+      const metaJSON = JSON.stringify({ acl: [] });
+      await authFetch(`${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${blobHex}:meta`, 'PUT', metaJSON);
+      const grant = await createSignedGrant(blobHash, recipientDID);
+      const grantHash = await uploadGrant(grant);
+      const encryptedKey = await encryptKeyForRecipient(rawKey, recipientPubBytes);
+      return {
+        blobHash, grantHash, encryptedKey,
+        filename: file.name,
+        mime: file.type || 'application/octet-stream',
+        size: file.size,
+      };
+    }
+
+    // --- Build & sign inner message ---
+    async function buildSignedMessage(toDID, text, attachments) {
+      const now = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+      const id = 'urn:gt:pm:' + now.replace(/[-:]/g, '');
+      const msg = { type: 'PrivateMessageV1', id, from: didStr, to: toDID, createdAt: now, text };
+      if (attachments && attachments.length > 0) msg.attachments = attachments;
+      const canon = await canonicalizeInner(msg);
+      const sig = await crypto.subtle.sign('Ed25519', signingKey.privateKey, new TextEncoder().encode(canon));
+      msg.signature = {
+        kid: didStr + '#' + signingKey.kid,
+        alg: 'Ed25519',
+        sig: base64urlEncode(new Uint8Array(sig)),
+      };
+      return msg;
+    }
+
+    // --- Verify sender signature ---
+    async function verifySenderSig(msg) {
+      try {
+        const senderDID = msg.from;
+        const doc = await resolveDIDDocument(senderDID);
+        const canon = await canonicalizeInner(msg);
+        const sigBytes = base64urlDecode(msg.signature.sig);
+        for (const vm of (doc.verificationMethod || [])) {
+          if (vm.type !== 'Ed25519VerificationKey2020') continue;
+          const pubBytes = base58Decode(vm.publicKeyMultibase.slice(1));
+          if (pubBytes.length !== 32) continue;
+          const pubKey = await crypto.subtle.importKey('raw', pubBytes, 'Ed25519', false, ['verify']);
+          const ok = await crypto.subtle.verify('Ed25519', pubKey, sigBytes, new TextEncoder().encode(canon));
+          if (ok) return true;
+        }
+        return false;
+      } catch(e) {
+        console.error('Sig verify error:', e);
+        return false;
+      }
+    }
+
+    // --- PM manifest ---
+    async function loadPMManifest() {
+      pmManifest = { version: 1, conversations: {} };
+      pmHeadHash = '';
+      try {
+        const headResp = await fetch(`${myStorageURL}/gt/v1/${didStr}/heads/pm`);
+        if (headResp.status === 404) return;
+        if (!headResp.ok) return;
+        const headData = await headResp.json();
+        pmHeadHash = headData.head;
+        const hex = pmHeadHash.replace('sha256-', '');
+        const blobResp = await authFetch(`${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${hex}`, 'GET', '');
+        if (!blobResp.ok) return;
+        const envelope = await blobResp.json();
+        if (envelope.type === 'InboxCiphertextV1') {
+          pmManifest = await decryptEnvelope(envelope);
+        } else {
+          pmManifest = envelope;
+        }
+      } catch(e) {
+        console.error('loadPMManifest error:', e);
+      }
+    }
+
+    async function savePMManifest() {
+      const manifestJSON = JSON.stringify(pmManifest);
+      const plainBytes = new TextEncoder().encode(manifestJSON);
+      const envelope = await encryptForRecipient(plainBytes, x25519Key.pubRaw);
+      const envelopeJSON = JSON.stringify(envelope);
+      const envelopeBytes = new TextEncoder().encode(envelopeJSON);
+      const manifestHex = await sha256Hex(envelopeBytes);
+      const putResp = await authFetch(
+        `${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${manifestHex}`, 'PUT', envelopeJSON
+      );
+      if (!putResp.ok && putResp.status !== 409) {
+        throw new Error('Failed to store PM manifest: ' + putResp.status);
+      }
+      const metaJSON = JSON.stringify({ acl: [didStr] });
+      await authFetch(
+        `${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${manifestHex}:meta`, 'PUT', metaJSON
+      );
+      const newHead = 'sha256-' + manifestHex;
+      const headResp = await authFetch(
+        `${myStorageURL}/gt/v1/${didStr}/heads/pm`, 'PUT',
+        JSON.stringify({ expected: pmHeadHash, head: newHead })
+      );
+      if (!headResp.ok && headResp.status !== 409) {
+        throw new Error('Failed to update PM head: ' + headResp.status);
+      }
+      pmHeadHash = newHead;
+    }
+
+    // --- Store a message blob (encrypted for self) ---
+    async function storeMessageBlob(innerMsg) {
+      const plainBytes = new TextEncoder().encode(JSON.stringify(innerMsg));
+      const envelope = await encryptForRecipient(plainBytes, x25519Key.pubRaw);
+      const envelopeJSON = JSON.stringify(envelope);
+      const envelopeBytes = new TextEncoder().encode(envelopeJSON);
+      const blobHex = await sha256Hex(envelopeBytes);
+      const putResp = await authFetch(
+        `${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${blobHex}`, 'PUT', envelopeJSON
+      );
+      if (!putResp.ok && putResp.status !== 409) {
+        throw new Error('Failed to store message blob: ' + putResp.status);
+      }
+      const metaJSON = JSON.stringify({ acl: [didStr] });
+      await authFetch(
+        `${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${blobHex}:meta`, 'PUT', metaJSON
+      );
+      return 'sha256-' + blobHex;
+    }
+
+    // --- Send flow ---
+    async function sendMessage(toDID, text, progressEl, files) {
+      function addStep(t) {
+        const div = document.createElement('div');
+        div.className = 'progress-step running';
+        div.textContent = '... ' + t;
+        progressEl.appendChild(div);
+        return div;
+      }
+      function markOk(div) { div.className = 'progress-step ok'; div.textContent = '\u2713 ' + div.textContent.slice(4); }
+
+      let step = addStep('Resolving recipient');
+      const { pubBytes: recipientPub, doc: recipientDoc } = await resolveX25519Pub(toDID);
+      markOk(step);
+
+      let attachments = [];
+      if (files && files.length > 0) {
+        for (const file of files) {
+          step = addStep(`Encrypting ${file.name}`);
+          const att = await uploadAttachment(file, recipientPub, toDID);
+          attachments.push(att);
+          markOk(step);
+        }
+      }
+
+      step = addStep('Signing message');
+      const innerMsg = await buildSignedMessage(toDID, text, attachments.length > 0 ? attachments : undefined);
+      markOk(step);
+
+      step = addStep('Encrypting for recipient');
+      const innerBytes = new TextEncoder().encode(JSON.stringify(innerMsg));
+      const envelope = await encryptForRecipient(innerBytes, recipientPub);
+      markOk(step);
+
+      step = addStep('Delivering to inbox');
+      const recipientEndpoint = getStorageEndpoint(recipientDoc);
+      let inboxUrl;
+      if (recipientEndpoint) {
+        inboxUrl = recipientEndpoint + '/inbox';
+      } else {
+        throw new Error('Recipient DID document has no storage endpoint');
+      }
+      const postResp = await fetch(inboxUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(envelope),
+      });
+      if (!postResp.ok) {
+        const errText = await postResp.text();
+        throw new Error('Inbox delivery failed: ' + postResp.status + ' ' + errText);
+      }
+      markOk(step);
+
+      step = addStep('Saving copy');
+      const blobHash = await storeMessageBlob(innerMsg);
+      if (!pmManifest.conversations[toDID]) {
+        pmManifest.conversations[toDID] = { lastMessageAt: innerMsg.createdAt, messages: [] };
+      }
+      const convo = pmManifest.conversations[toDID];
+      const msgEntry = { hash: blobHash, dir: 'out', ts: innerMsg.createdAt, text: innerMsg.text };
+      if (innerMsg.attachments && innerMsg.attachments.length > 0) {
+        msgEntry.attachments = innerMsg.attachments;
+      }
+      convo.messages.push(msgEntry);
+      convo.lastMessageAt = innerMsg.createdAt;
+      await savePMManifest();
+      markOk(step);
+    }
+
+    // --- Receive flow ---
+    async function processInbox(statusEl) {
+      statusEl.textContent = 'Checking...';
+      try {
+        const listResp = await authFetch(`${myStorageURL}/gt/v1/${didStr}/inbox`, 'GET', '');
+        if (!listResp.ok) {
+          statusEl.textContent = 'Failed to fetch inbox';
+          return 0;
+        }
+        const items = await listResp.json();
+        if (!items || items.length === 0) {
+          statusEl.textContent = 'No new messages';
+          return 0;
+        }
+        statusEl.textContent = `Processing ${items.length} message(s)...`;
+        let processed = 0;
+        for (const item of items) {
+          try {
+            const getResp = await authFetch(`${myStorageURL}/gt/v1/${didStr}/inbox/${item.id}`, 'GET', '');
+            if (!getResp.ok) continue;
+            const envelope = await getResp.json();
+            const innerMsg = await decryptEnvelope(envelope);
+            const sigOk = await verifySenderSig(innerMsg);
+            const blobHash = await storeMessageBlob(innerMsg);
+            const peerDID = innerMsg.from;
+            if (!pmManifest.conversations[peerDID]) {
+              pmManifest.conversations[peerDID] = { lastMessageAt: innerMsg.createdAt, messages: [] };
+            }
+            const convo = pmManifest.conversations[peerDID];
+            if (!convo.messages.some(m => m.hash === blobHash)) {
+              const entry = {
+                hash: blobHash, dir: 'in', ts: innerMsg.createdAt,
+                text: innerMsg.text, verified: sigOk,
+              };
+              if (innerMsg.attachments && innerMsg.attachments.length > 0) {
+                entry.attachments = innerMsg.attachments;
+              }
+              convo.messages.push(entry);
+              convo.lastMessageAt = innerMsg.createdAt;
+            }
+            await authFetch(`${myStorageURL}/gt/v1/${didStr}/inbox/${item.id}`, 'DELETE', '');
+            processed++;
+          } catch(e) {
+            console.error('Failed to process inbox item', item.id, e);
+          }
+        }
+        if (processed > 0) await savePMManifest();
+        statusEl.textContent = processed > 0 ? `${processed} new message(s)` : 'No new messages';
+        return processed;
+      } catch(e) {
+        statusEl.textContent = 'Error: ' + e.message;
+        return 0;
+      }
+    }
+
+    // --- UI rendering ---
+    function renderConversationList() {
+      const container = document.getElementById('msg-conversations');
+      const convos = pmManifest.conversations;
+      const peers = Object.keys(convos).sort((a, b) => {
+        return (convos[b].lastMessageAt || '').localeCompare(convos[a].lastMessageAt || '');
+      });
+      if (peers.length === 0) {
+        container.innerHTML = '<div class="empty">No conversations yet. Send a message to get started.</div>';
+        return;
+      }
+      container.innerHTML = peers.map(peer => {
+        const convo = convos[peer];
+        const lastMsg = convo.messages[convo.messages.length - 1];
+        const preview = lastMsg ? ((lastMsg.dir === 'out' ? 'You: ' : '') + (lastMsg.text || '').slice(0, 60)) : '';
+        const time = convo.lastMessageAt ? new Date(convo.lastMessageAt).toLocaleDateString() : '';
+        const peerParts = peer.split(':');
+        const peerShort = peerParts[peerParts.length - 1];
+        return `
+          <div class="card convo-card" data-peer="${esc(peer)}">
+            <span class="convo-time">${esc(time)}</span>
+            <div class="mono" style="font-size:13px;">${esc(peerShort)}</div>
+            <div class="convo-preview">${esc(preview)}</div>
+          </div>`;
+      }).join('');
+      container.querySelectorAll('.convo-card').forEach(card => {
+        card.addEventListener('click', () => openConversation(card.dataset.peer));
+      });
+    }
+
+    async function openConversation(peerDID) {
+      currentConvoPeer = peerDID;
+      document.getElementById('msg-conversations').style.display = 'none';
+      document.getElementById('msg-compose').style.display = 'none';
+      document.getElementById('btn-new-msg').style.display = 'none';
+      document.getElementById('btn-refresh-inbox').style.display = 'none';
+      const thread = document.getElementById('msg-thread');
+      thread.style.display = 'block';
+      const peerParts = peerDID.split(':');
+      document.getElementById('msg-thread-peer').textContent = peerParts[peerParts.length - 1];
+      renderThread();
+      await reverifyUnverified(peerDID);
+    }
+
+    async function reverifyUnverified(peerDID) {
+      const convo = pmManifest.conversations[peerDID];
+      if (!convo) return;
+      const unverified = convo.messages.filter(m => m.dir === 'in' && m.verified === false);
+      if (unverified.length === 0) return;
+      let changed = false;
+      for (const m of unverified) {
+        try {
+          const hex = m.hash.replace('sha256-', '');
+          const resp = await authFetch(`${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${hex}`, 'GET', '');
+          if (!resp.ok) continue;
+          const envelope = await resp.json();
+          const innerMsg = await decryptEnvelope(envelope);
+          const sigOk = await verifySenderSig(innerMsg);
+          if (sigOk) { m.verified = true; changed = true; }
+        } catch(e) {
+          console.error('Re-verify failed for', m.hash, e);
+        }
+      }
+      if (changed) {
+        renderThread();
+        await savePMManifest();
+      }
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function renderThread() {
+      const convo = pmManifest.conversations[currentConvoPeer];
+      const container = document.getElementById('msg-thread-messages');
+      if (!convo || convo.messages.length === 0) {
+        container.innerHTML = '<div class="empty">No messages</div>';
+        return;
+      }
+      container.innerHTML = convo.messages.map((m, idx) => {
+        const time = m.ts ? new Date(m.ts).toLocaleString() : '';
+        let verifyTag = '';
+        if (m.dir === 'in') {
+          verifyTag = m.verified === false
+            ? '<div class="msg-verify fail">Signature not verified</div>'
+            : (m.verified === true ? '<div class="msg-verify ok">Verified</div>' : '');
+        }
+        let attHtml = '';
+        if (m.attachments && m.attachments.length > 0) {
+          attHtml = '<ul class="attachment-list">' + m.attachments.map((att, ai) =>
+            `<li><a href="#" data-msg-idx="${idx}" data-att-idx="${ai}" class="att-download">${esc(att.filename || 'file')}</a><span class="att-size">${formatFileSize(att.size || 0)}</span></li>`
+          ).join('') + '</ul>';
+        }
+        return `
+          <div class="msg-bubble ${m.dir}">
+            <div>${esc(m.text || '')}</div>
+            ${attHtml}
+            <div class="msg-time">${esc(time)}</div>
+            ${verifyTag}
+          </div>`;
+      }).join('');
+      container.querySelectorAll('.att-download').forEach(link => {
+        link.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const msgIdx = parseInt(link.dataset.msgIdx);
+          const attIdx = parseInt(link.dataset.attIdx);
+          await downloadAttachment(currentConvoPeer, msgIdx, attIdx, link);
+        });
+      });
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function downloadAttachment(peerDID, msgIdx, attIdx, linkEl) {
+      const convo = pmManifest.conversations[peerDID];
+      const msg = convo.messages[msgIdx];
+      const att = msg.attachments[attIdx];
+      const origText = linkEl.textContent;
+      linkEl.textContent = 'Downloading...';
+      try {
+        const rawKey = await decryptKeyFromSender(att.encryptedKey);
+        let fetchStorageURL = myStorageURL;
+        let fetchDID = didStr;
+        if (msg.dir === 'in') {
+          const doc = await resolveDIDDocument(peerDID);
+          const ep = getStorageEndpoint(doc);
+          if (ep) {
+            const epUrl = new URL(ep);
+            fetchStorageURL = epUrl.origin;
+          }
+          fetchDID = peerDID;
+        }
+        const blobHex = att.blobHash.replace('sha256-', '');
+        const blobPath = `${fetchStorageURL}/gt/v1/${fetchDID}/blobs/sha256/${blobHex}`;
+        const urlObj = new URL(blobPath);
+        const path = urlObj.pathname;
+        const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+        const bodyBytes = new Uint8Array(0);
+        const sig = await signPayload(signingKey.privateKey, timestamp, 'GET', path, bodyBytes);
+        const resp = await fetch(blobPath, {
+          method: 'GET',
+          headers: {
+            'X-GT-DID': didStr,
+            'X-GT-Timestamp': timestamp,
+            'X-GT-Signature': sig,
+            'X-GT-Grant': att.grantHash,
+          },
+        });
+        if (!resp.ok) throw new Error('Failed to fetch attachment: ' + resp.status);
+        const encryptedBytes = new Uint8Array(await resp.arrayBuffer());
+        const plainBytes = await decryptAttachment(encryptedBytes, rawKey);
+        const blob = new Blob([plainBytes], { type: att.mime || 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = att.filename || 'file';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        linkEl.textContent = origText;
+      } catch (e) {
+        console.error('Attachment download error:', e);
+        linkEl.textContent = 'Failed: ' + e.message;
+        setTimeout(() => { linkEl.textContent = origText; }, 3000);
+      }
+    }
+
+    function closeThread() {
+      currentConvoPeer = '';
+      document.getElementById('msg-thread').style.display = 'none';
+      document.getElementById('msg-conversations').style.display = 'block';
+      document.getElementById('btn-new-msg').style.display = '';
+      document.getElementById('btn-refresh-inbox').style.display = '';
+      renderConversationList();
+    }
+
+    // --- Init messages ---
+    async function initMessages() {
+      if (x25519Key) {
+        await showMessagesUI();
+        return;
+      }
+      document.getElementById('msg-key-needed').style.display = 'block';
+      document.getElementById('msg-main').style.display = 'none';
+    }
+
+    async function showMessagesUI() {
+      document.getElementById('msg-key-needed').style.display = 'none';
+      document.getElementById('msg-main').style.display = 'block';
+      await loadPMManifest();
+      renderConversationList();
+    }
+
+    // X25519 key file picker
+    document.getElementById('x25519-key-file').addEventListener('change', async function() {
+      const errEl = document.getElementById('x25519-key-error');
+      errEl.style.display = 'none';
+      if (!this.files.length) return;
+      try {
+        const text = await this.files[0].text();
+        const keyJSON = JSON.parse(text);
+        x25519Key = await importX25519Key(keyJSON);
+        await showMessagesUI();
+      } catch(e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+      }
+    });
+
+    // New message button
+    document.getElementById('btn-new-msg').addEventListener('click', () => {
+      const compose = document.getElementById('msg-compose');
+      compose.style.display = compose.style.display === 'none' ? 'block' : 'none';
+      document.getElementById('msg-to').value = '';
+      document.getElementById('msg-text').value = '';
+      document.getElementById('msg-attach-file').value = '';
+      document.getElementById('msg-attach-info').textContent = '';
+      document.getElementById('msg-send-progress').innerHTML = '';
+    });
+    document.getElementById('btn-cancel-msg').addEventListener('click', () => {
+      document.getElementById('msg-compose').style.display = 'none';
+    });
+
+    // Send message
+    document.getElementById('btn-send-msg').addEventListener('click', async function() {
+      this.disabled = true;
+      const progressEl = document.getElementById('msg-send-progress');
+      progressEl.innerHTML = '';
+      try {
+        let toInput = document.getElementById('msg-to').value.trim();
+        const text = document.getElementById('msg-text').value.trim();
+        if (!toInput) throw new Error('Enter a recipient DID');
+        if (!text) throw new Error('Enter a message');
+        let toDID;
+        if (toInput.startsWith('did:')) {
+          toDID = toInput;
+        } else {
+          throw new Error('Please enter a full DID (e.g. did:web:did.greything.com:u:alice)');
+        }
+        const fileInput = document.getElementById('msg-attach-file');
+        const files = fileInput.files.length > 0 ? Array.from(fileInput.files) : null;
+        await sendMessage(toDID, text, progressEl, files);
+        document.getElementById('msg-compose').style.display = 'none';
+        document.getElementById('msg-to').value = '';
+        document.getElementById('msg-text').value = '';
+        fileInput.value = '';
+        document.getElementById('msg-attach-info').textContent = '';
+        renderConversationList();
+      } catch(e) {
+        const div = document.createElement('div');
+        div.className = 'progress-step fail';
+        div.textContent = '\u2717 ' + e.message;
+        progressEl.appendChild(div);
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    // Refresh inbox
+    document.getElementById('btn-refresh-inbox').addEventListener('click', async function() {
+      this.disabled = true;
+      const statusEl = document.getElementById('inbox-status');
+      const count = await processInbox(statusEl);
+      if (count > 0) renderConversationList();
+      this.disabled = false;
+    });
+
+    // Back from thread
+    document.getElementById('btn-back-convos').addEventListener('click', closeThread);
+
+    // Reply from thread
+    document.getElementById('btn-send-reply').addEventListener('click', async function() {
+      this.disabled = true;
+      const progressEl = document.getElementById('msg-reply-progress');
+      progressEl.innerHTML = '';
+      try {
+        const text = document.getElementById('msg-reply-text').value.trim();
+        if (!text) throw new Error('Enter a message');
+        const replyFileInput = document.getElementById('msg-reply-attach-file');
+        const replyFiles = replyFileInput.files.length > 0 ? Array.from(replyFileInput.files) : null;
+        await sendMessage(currentConvoPeer, text, progressEl, replyFiles);
+        document.getElementById('msg-reply-text').value = '';
+        replyFileInput.value = '';
+        document.getElementById('msg-reply-attach-info').textContent = '';
+        progressEl.innerHTML = '';
+        renderThread();
+      } catch(e) {
+        const div = document.createElement('div');
+        div.className = 'progress-step fail';
+        div.textContent = '\u2717 ' + e.message;
+        progressEl.appendChild(div);
+      } finally {
+        this.disabled = false;
+      }
+    });
+
+    // ========== Tabs ==========
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ========== Login ==========
+    function showLoginError(msg) {
+      const el = document.getElementById('login-error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    // ========== Login from identity object ==========
+    async function loginWithIdentity(identity) {
+      let identityObj = identity;
+
+      if (identity.kty && !identity.did) {
+        const fallbackUID = document.getElementById('fallback-user-id').value.trim();
+        if (!fallbackUID) throw new Error('Old key format detected. Enter your user ID below.');
+        throw new Error('Old single-key format not supported on external dashboards. Use a full identity file.');
+      }
+
+      const parsed = parseDID(identityObj.did);
+
+      // Only allow DIDs hosted on this site
+      if (parsed.domain !== location.hostname) {
+        throw new Error('This identity is hosted on ' + parsed.domain + ', not on ' + location.hostname + '. You can only sign in with an identity registered on this site.');
+      }
+
+      didStr = parsed.didStr;
+      myDIDDocURL = parsed.didDocURL;
+
+      // Import device Ed25519 key
+      const deviceKey = identityObj.keys['device-1'];
+      const rootKey = identityObj.keys['root'];
+      let sigKey;
+      if (deviceKey && deviceKey.privateKeyB64Url) {
+        sigKey = deviceKey;
+      } else if (rootKey && rootKey.privateKeyB64Url) {
+        sigKey = rootKey;
+      } else {
+        throw new Error('No signing key with private key found in identity file');
+      }
+      signingKey = await importEd25519Key(sigKey);
+
+      // Import X25519 key if present
+      const x25519KeyData = identityObj.keys['x25519-1'];
+      if (x25519KeyData && x25519KeyData.privateKeyB64Url) {
+        x25519Key = await importX25519Key(x25519KeyData);
+      }
+
+      // Resolve DID document to get storage endpoint
+      const resp = await fetch(parsed.didDocURL, { cache: 'no-store' });
+      if (resp.status === 404) throw new Error('DID not found: ' + didStr);
+      if (!resp.ok) throw new Error('Failed to fetch DID: ' + resp.status);
+      const ct = resp.headers.get('content-type') || '';
+      if (!ct.includes('json')) {
+        throw new Error('DID document returned non-JSON response (got ' + ct + '). Try reloading the page.');
+      }
+      const doc = await resp.json();
+      const endpoint = getStorageEndpoint(doc);
+      if (!endpoint) throw new Error('DID document has no storage endpoint (SolidPod service)');
+      myStorageURL = new URL(endpoint).origin;
+
+      // Save identity to localStorage
+      saveIdentityToStorage(didStr, identityObj);
+
+      // Switch to dashboard
+      showDashboard();
+
+      // Init messages immediately (it's the default tab)
+      await initMessages();
+
+      // Load claims for editing
+      await loadClaims();
+    }
+
+    // Show old-format fallback when file has kty but no did
+    document.getElementById('identity-file').addEventListener('change', async function() {
+      if (!this.files.length) return;
+      try {
+        const text = await this.files[0].text();
+        const parsed = JSON.parse(text);
+        if (parsed.kty && !parsed.did) {
+          document.getElementById('login-userid-fallback').style.display = 'block';
+        } else {
+          document.getElementById('login-userid-fallback').style.display = 'none';
+        }
+      } catch(e) {}
+    });
+
+    // "Use different file" button
+    document.getElementById('btn-use-different').addEventListener('click', function() {
+      document.getElementById('login-saved-area').style.display = 'none';
+      document.getElementById('login-file-area').style.display = 'block';
+    });
+
+    // Login button
+    document.getElementById('btn-login').addEventListener('click', async function() {
+      document.getElementById('login-error').style.display = 'none';
+      this.disabled = true;
+      this.textContent = 'Signing in...';
+      try {
+        const savedArea = document.getElementById('login-saved-area');
+        if (savedArea.style.display !== 'none') {
+          const lastDid = localStorage.getItem(LS_LAST_DID);
+          const saved = lastDid ? loadIdentityFromStorage(lastDid) : null;
+          if (saved) {
+            await loginWithIdentity(saved);
+            return;
+          }
+        }
+        const fileInput = document.getElementById('identity-file');
+        if (!fileInput.files.length) throw new Error('Select your identity file');
+        const text = await fileInput.files[0].text();
+        const identity = JSON.parse(text);
+        await loginWithIdentity(identity);
+      } catch (e) {
+        showLoginError(e.message);
+      } finally {
+        this.disabled = false;
+        this.textContent = 'Sign In';
+      }
+    });
+
+    // ========== Auto-login on page load ==========
+    (async function autoLogin() {
+      const lastDid = localStorage.getItem(LS_LAST_DID);
+      if (!lastDid) return;
+      const saved = loadIdentityFromStorage(lastDid);
+      if (!saved) return;
+      const shortDid = lastDid.split(':').pop();
+      document.getElementById('login-file-area').style.display = 'none';
+      document.getElementById('login-saved-area').style.display = 'block';
+      document.getElementById('saved-identity-label').textContent = 'Saved: ' + shortDid + ' (' + lastDid.slice(0, 40) + '...)';
+      try {
+        await loginWithIdentity(saved);
+      } catch(e) {
+        showLoginError('Auto-login failed: ' + e.message);
+      }
+    })();
+
+    // ========== Dashboard ==========
+    function showDashboard() {
+      document.getElementById('view-home').style.display = 'none';
+      document.getElementById('view-dashboard').style.display = 'block';
+      const urlEl = document.getElementById('dash-did-url');
+      urlEl.href = myDIDDocURL;
+      urlEl.textContent = myDIDDocURL.replace('https://', '');
+      document.getElementById('dash-user-name').textContent = didStr;
+    }
+
+    function updateDashboardUserInfo(claims) {
+      const name = claims.name || '';
+      const familyName = claims.familyname || '';
+      const nickname = claims.nickname || '';
+      let display = '';
+      if (name || familyName) display = (name + ' ' + familyName).trim();
+      if (nickname) display = display ? display + ' (@' + nickname + ')' : '@' + nickname;
+      if (display) document.getElementById('dash-user-name').textContent = display;
+    }
+
+    function showHome() {
+      document.getElementById('view-dashboard').style.display = 'none';
+      document.getElementById('view-home').style.display = 'block';
+    }
+
+    // ========== Logout ==========
+    document.getElementById('btn-logout').addEventListener('click', function() {
+      clearIdentityFromStorage(didStr);
+      signingKey = null;
+      currentHeadHash = '';
+      x25519Key = null;
+      pmManifest = null;
+      pmHeadHash = '';
+      currentConvoPeer = '';
+      myStorageURL = '';
+      myDIDDocURL = '';
+      document.getElementById('msg-conversations').innerHTML = '';
+      document.getElementById('msg-thread').style.display = 'none';
+      document.getElementById('msg-main').style.display = 'none';
+      document.getElementById('msg-key-needed').style.display = 'none';
+      for (const f of CLAIM_FIELDS) document.getElementById('edit-' + f).value = '';
+      document.getElementById('edit-email').value = '';
+      document.getElementById('edit-phone').value = '';
+      document.getElementById('save-progress').innerHTML = '';
+      document.getElementById('save-error').style.display = 'none';
+      document.getElementById('save-success').style.display = 'none';
+      // Reset login form
+      document.getElementById('login-file-area').style.display = 'block';
+      document.getElementById('login-saved-area').style.display = 'none';
+      document.getElementById('login-userid-fallback').style.display = 'none';
+      // Reset to messages tab
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-tab="messages"]').classList.add('active');
+      document.getElementById('tab-messages').classList.add('active');
+      showHome();
+    });
+
+    // ========== Load Claims ==========
+    const CLAIM_FIELDS = ['name', 'familyname', 'nickname', 'city', 'country', 'alma_mater', 'about', 'keywords'];
+
+    async function loadClaims() {
+      for (const f of CLAIM_FIELDS) document.getElementById('edit-' + f).value = '';
+      document.getElementById('edit-email').value = '';
+      document.getElementById('edit-phone').value = '';
+      currentHeadHash = '';
+
+      const headResp = await fetch(`${myStorageURL}/gt/v1/${didStr}/heads/claims`);
+      if (headResp.status === 404) return;
+      if (!headResp.ok) throw new Error('Failed to fetch claims head: ' + headResp.status);
+
+      const headData = await headResp.json();
+      currentHeadHash = headData.head;
+
+      const hex = currentHeadHash.replace('sha256-', '');
+      const blobResp = await fetch(`${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${hex}`);
+      if (!blobResp.ok) throw new Error('Failed to fetch claims blob: ' + blobResp.status);
+
+      const manifest = await blobResp.json();
+      const claims = manifest.claims || {};
+
+      for (const f of CLAIM_FIELDS) {
+        if (claims[f]) document.getElementById('edit-' + f).value = claims[f];
+      }
+      updateDashboardUserInfo(claims);
+    }
+
+    // ========== Save Claims ==========
+    document.getElementById('btn-save').addEventListener('click', async function() {
+      this.disabled = true;
+      const prog = document.getElementById('save-progress');
+      prog.innerHTML = '';
+      document.getElementById('save-error').style.display = 'none';
+      document.getElementById('save-success').style.display = 'none';
+
+      function addStep(text) {
+        const div = document.createElement('div');
+        div.className = 'progress-step running';
+        div.textContent = '... ' + text;
+        prog.appendChild(div);
+        return div;
+      }
+      function markOk(div) { div.className = 'progress-step ok'; div.textContent = '\u2713 ' + div.textContent.slice(4); }
+
+      try {
+        let step = addStep('Building claims');
+        const claims = {};
+        for (const f of CLAIM_FIELDS) {
+          const v = document.getElementById('edit-' + f).value.trim();
+          if (v) claims[f] = v;
+        }
+        const email = document.getElementById('edit-email').value.trim();
+        if (email) {
+          claims['email_hash'] = 'sha256-' + await sha256Hex(email.toLowerCase());
+        }
+        const phone = document.getElementById('edit-phone').value.trim();
+        if (phone) {
+          claims['phone_hash'] = 'sha256-' + await sha256Hex(phone);
+        }
+
+        const manifest = {
+          version: 1,
+          did: didStr,
+          claims: claims,
+          createdAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        };
+        const manifestJSON = JSON.stringify(manifest);
+        const manifestBytes = new TextEncoder().encode(manifestJSON);
+        const manifestHex = await sha256Hex(manifestBytes);
+        markOk(step);
+
+        step = addStep('Storing claims blob');
+        const putResp = await authFetch(
+          `${myStorageURL}/gt/v1/${didStr}/blobs/sha256/${manifestHex}`, 'PUT', manifestJSON
+        );
+        if (!putResp.ok && putResp.status !== 409) throw new Error('PUT blob: ' + putResp.status + ' ' + await putResp.text());
+        markOk(step);
+
+        step = addStep('Updating claims head');
+        const newHead = 'sha256-' + manifestHex;
+        const putHeadResp = await authFetch(
+          `${myStorageURL}/gt/v1/${didStr}/heads/claims`, 'PUT',
+          JSON.stringify({ expected: currentHeadHash, head: newHead })
+        );
+        if (putHeadResp.status === 409) {
+          markOk(step);
+          step = addStep('Conflict detected, retrying...');
+          await loadClaims();
+          throw new Error('Claims were updated elsewhere. Your edits are still in the form — try saving again.');
+        }
+        if (!putHeadResp.ok) throw new Error('PUT head: ' + putHeadResp.status + ' ' + await putHeadResp.text());
+        currentHeadHash = newHead;
+        markOk(step);
+
+        step = addStep('Saved!');
+        markOk(step);
+        document.getElementById('save-success').textContent = 'Claims updated successfully.';
+        document.getElementById('save-success').style.display = 'block';
+
+      } catch (e) {
+        const el = document.getElementById('save-error');
+        el.textContent = e.message;
+        el.style.display = 'block';
+      } finally {
+        this.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

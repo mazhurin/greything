@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GreyThing — Register</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    h1 { color: #fff; margin: 0; }
+    h2 { color: #fff; margin: 0 0 16px 0; font-size: 20px; }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    /* Stepper */
+    .steps {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .step-indicator {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      background: #2a2a2a;
+      color: #666;
+      cursor: default;
+    }
+    .step-indicator.active {
+      background: #4a9eff;
+      color: #fff;
+    }
+    .step-indicator.done {
+      background: #2d5a2d;
+      color: #8f8;
+    }
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card {
+      background: #2a2a2a;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    /* Forms */
+    label {
+      display: block;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+    label:first-child { margin-top: 0; }
+    input[type="text"], input[type="tel"], textarea {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: inherit;
+    }
+    input::placeholder, textarea::placeholder { color: #555; }
+    textarea { resize: vertical; min-height: 60px; }
+    button {
+      padding: 10px 24px;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #4a9eff;
+      color: #fff;
+      margin-top: 16px;
+    }
+    button:hover { background: #3a8eef; }
+    button:disabled {
+      background: #444;
+      color: #888;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #3a3a3a;
+      color: #ccc;
+    }
+    .btn-secondary:hover { background: #4a4a4a; }
+    /* Key display */
+    .mono {
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      color: #4a9eff;
+    }
+    .key-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .key-label {
+      color: #888;
+      font-size: 13px;
+      white-space: nowrap;
+      min-width: 80px;
+    }
+    /* Progress */
+    .progress-step {
+      padding: 4px 0;
+      font-size: 14px;
+      color: #888;
+    }
+    .progress-step.ok { color: #8f8; }
+    .progress-step.fail { color: #f88; }
+    .progress-step.running { color: #ff8; }
+    /* Download buttons */
+    .download-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .download-row a {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #2d5a2d;
+      color: #8f8;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .download-row a:hover { background: #3a6a3a; }
+    .error { color: #f88; margin-top: 8px; }
+    .nav-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="/" style="display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit;">
+      <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <g fill="#e0e0e0">
+          <rect x="18" y="12" width="10" height="40" rx="3"/>
+          <rect x="36" y="12" width="10" height="40" rx="3"/>
+        </g>
+      </svg>
+      <h1>GreyThing</h1>
+    </a>
+    <span style="color:#888; font-size:18px; margin-left:-4px;">Register</span>
+  </div>
+
+  <div class="steps">
+    <span class="step-indicator active" data-step="0">1. Generate</span>
+    <span class="step-indicator" data-step="1">2. Claims</span>
+    <span class="step-indicator" data-step="2">3. Recovery</span>
+    <span class="step-indicator" data-step="3">4. Register</span>
+    <span class="step-indicator" data-step="4">5. Download</span>
+  </div>
+
+  <!-- Step 0: Generate Keys -->
+  <div class="panel active" id="panel-0">
+    <h2>Your URL Identity</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      Choose a URL identity. Three keypairs will be generated locally in your browser.
+    </p>
+    <div class="card">
+      <label style="margin-top:0;">Your URL identity</label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="text" id="custom-user-id" placeholder="e.g. alice" style="max-width:200px;">
+        <button class="btn-secondary btn-small" id="btn-check-id" style="margin-top:0;">Check Availability</button>
+        <button class="btn-secondary btn-small" id="btn-random-id" style="margin-top:0;">Generate Random</button>
+      </div>
+      <p style="color:#666; font-size:12px; margin:4px 0 0 0;">Lowercase letters and numbers, 3–20 characters.</p>
+      <div id="id-check-status" style="font-size:13px; margin-top:6px;"></div>
+    </div>
+    <button id="btn-generate" disabled>Generate Keys</button>
+    <div id="keys-display" style="display:none; margin-top:16px;">
+      <div class="card">
+        <div class="key-row"><span class="key-label">Root (Ed25519)</span><span class="mono" id="key-root-pub"></span></div>
+      </div>
+      <div class="card">
+        <div class="key-row"><span class="key-label">Device-1 (Ed25519)</span><span class="mono" id="key-device-pub"></span></div>
+      </div>
+      <div class="card">
+        <div class="key-row"><span class="key-label">X25519-1</span><span class="mono" id="key-x25519-pub"></span></div>
+      </div>
+      <div class="nav-buttons">
+        <button id="btn-to-claims">Next: Claims</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1: Claims -->
+  <div class="panel" id="panel-1">
+    <h2>Public Claims</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">All fields are optional. These help others find you.</p>
+    <div class="card">
+      <label>Name</label>
+      <input type="text" id="claim-name" placeholder="Alice">
+      <label>Family name</label>
+      <input type="text" id="claim-familyname" placeholder="Smith">
+      <label>Nickname</label>
+      <input type="text" id="claim-nickname" placeholder="ali">
+      <label>City</label>
+      <input type="text" id="claim-city" placeholder="London">
+      <label>Country</label>
+      <input type="text" id="claim-country" placeholder="UK">
+      <label>Alma mater</label>
+      <input type="text" id="claim-alma_mater" placeholder="University">
+      <label>About</label>
+      <textarea id="claim-about" placeholder="A few words about yourself"></textarea>
+      <label>Keywords</label>
+      <input type="text" id="claim-keywords" placeholder="developer, crypto, music">
+      <label>Email (stored as hash only)</label>
+      <input type="text" id="claim-email" placeholder="alice@example.com">
+      <label>Phone (stored as hash only)</label>
+      <input type="tel" id="claim-phone" placeholder="+1234567890">
+    </div>
+    <div class="nav-buttons">
+      <button class="btn-secondary" onclick="goStep(0)">Back</button>
+      <button onclick="goStep(2)">Next: Recovery</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Recovery -->
+  <div class="panel" id="panel-2">
+    <h2>Recovery Passphrase</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      Optional. Encrypts your root key and stores it on the server, so you can recover your identity with just this passphrase.
+    </p>
+    <div class="card">
+      <label>Passphrase (visible)</label>
+      <input type="text" id="recovery-passphrase" placeholder="A memorable phrase...">
+      <label>Hint (public, stored alongside encrypted key)</label>
+      <input type="text" id="recovery-hint" placeholder="Hint to remind yourself">
+    </div>
+    <div id="recovery-confirm" style="display:none; margin-top:12px;">
+      <div class="card">
+        <p style="margin:0 0 8px 0; color:#ff8;">Please confirm your passphrase:</p>
+        <p style="margin:0; font-size:16px; color:#fff;" id="recovery-show"></p>
+      </div>
+      <div class="nav-buttons">
+        <button class="btn-secondary" id="btn-recovery-no">Change</button>
+        <button id="btn-recovery-yes">Correct, continue</button>
+      </div>
+    </div>
+    <div id="recovery-nav" class="nav-buttons">
+      <button class="btn-secondary" onclick="goStep(1)">Back</button>
+      <button id="btn-to-register">Next: Register</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Register -->
+  <div class="panel" id="panel-3">
+    <h2>Register</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      This will create your DID identity on the GreyThing network.
+    </p>
+    <div id="reg-summary" class="card" style="font-size:14px;"></div>
+    <button id="btn-register">Register Now</button>
+    <div id="progress" style="margin-top:16px;"></div>
+    <div id="reg-error" class="error" style="display:none;"></div>
+    <div id="reg-nav" class="nav-buttons" style="display:none;">
+      <button class="btn-secondary" onclick="goStep(2)">Back</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Download Keys -->
+  <div class="panel" id="panel-4">
+    <h2>Download Your Keys</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      Save your identity file securely. It contains your device keys and is used to sign in.
+    </p>
+    <div class="card">
+      <p style="margin:0 0 4px 0;">Your DID:</p>
+      <p class="mono" id="final-did" style="margin:0;"></p>
+    </div>
+    <div class="download-row" id="download-links"></div>
+    <p style="color:#888; font-size:13px; margin-top:16px;">
+      Your identity file contains your device and encryption keys. It does <strong style="color:#fff;">not</strong> contain your root key in plaintext.
+    </p>
+    <div style="margin-top:16px; padding-top:16px; border-top:1px solid #333;">
+      <button class="btn-secondary" id="btn-download-root">Download Root Key (unencrypted)</button>
+      <p style="color:#666; font-size:12px; margin:4px 0 0 0;">For offline backup only. Store on USB drive or paper.</p>
+    </div>
+  </div>
+
+  <!-- Root key warning modal -->
+  <div id="root-key-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#2a2a2a; border-radius:8px; padding:24px; max-width:480px; margin:20px;">
+      <h3 style="color:#f88; margin:0 0 12px 0;">WARNING: This file contains your unencrypted root key.</h3>
+      <p style="color:#e0e0e0; font-size:14px; line-height:1.5;">
+        Your root key is the master key to your identity. Anyone with this file can take full control of your DID.
+      </p>
+      <ul style="color:#ccc; font-size:14px; line-height:1.6; padding-left:20px;">
+        <li>Store it offline (USB drive, printed paper backup)</li>
+        <li>Never share it or upload it to cloud storage</li>
+        <li>If you set a passphrase, your identity file already contains an encrypted backup</li>
+      </ul>
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="btn-secondary" id="btn-root-cancel">Cancel</button>
+        <button style="background:#c44; margin-top:0;" id="btn-root-confirm">I understand, download</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hash-wasm@4/dist/argon2.umd.min.js"></script>
+  <script>
+    // ========== Config ==========
+    const DIDS_URL = '';  // same origin
+    const STORAGE_URL = 'https://storage.greything.com';
+    const DID_DOMAIN = 'did.greything.com';
+
+    // ========== State ==========
+    let currentStep = 0;
+    let keys = {}; // { root, device1, x25519 } each { pub, priv, pubMultibase, pubRaw }
+    let userID = '';
+    let didStr = '';
+    let savedDidDoc = null;          // DID document for embedding in identity file
+    let encryptedRootKeyBlob = null; // encrypted root key JSON string (if passphrase set)
+
+    // ========== Base58 ==========
+    const B58_ALPHA = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    function base58Encode(bytes) {
+      let num = 0n;
+      for (const b of bytes) num = num * 256n + BigInt(b);
+      let s = '';
+      while (num > 0n) { s = B58_ALPHA[Number(num % 58n)] + s; num = num / 58n; }
+      for (const b of bytes) { if (b === 0) s = '1' + s; else break; }
+      return s || '1';
+    }
+
+    // ========== Hex / SHA-256 ==========
+    function hexEncode(bytes) {
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    async function sha256Hex(data) {
+      const buf = await crypto.subtle.digest('SHA-256', data instanceof Uint8Array ? data : new TextEncoder().encode(data));
+      return hexEncode(new Uint8Array(buf));
+    }
+    async function hashBody(bodyBytes) {
+      return 'sha256-' + await sha256Hex(bodyBytes);
+    }
+
+    // ========== Base64URL ==========
+    function base64urlEncode(bytes) {
+      const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      let s = '';
+      for (const b of arr) s += String.fromCharCode(b);
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function base64urlDecode(s) {
+      s = s.replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      const bin = atob(s);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return arr;
+    }
+
+    // ========== Key Generation ==========
+    async function generateEd25519(kid) {
+      const kp = await crypto.subtle.generateKey('Ed25519', true, ['sign', 'verify']);
+      const pubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+      const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+      const seed = base64urlDecode(privJwk.d); // 32-byte seed
+      const pubMultibase = 'z' + base58Encode(pubRaw);
+      return {
+        kp, pubRaw, seed, pubMultibase, kid,
+        kty: 'Ed25519',
+        privKeyFull: concatBytes(seed, pubRaw), // 64-byte Go-compatible
+      };
+    }
+    async function generateX25519(kid) {
+      const kp = await crypto.subtle.generateKey({ name: 'X25519' }, true, ['deriveKey', 'deriveBits']);
+      const pubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+      const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+      const privRaw = base64urlDecode(privJwk.d); // 32-byte scalar
+      const pubMultibase = 'z' + base58Encode(pubRaw);
+      return { kp, pubRaw, privRaw, pubMultibase, kid, kty: 'X25519' };
+    }
+    function concatBytes(a, b) {
+      const out = new Uint8Array(a.length + b.length);
+      out.set(a); out.set(b, a.length);
+      return out;
+    }
+
+    // ========== Auth Signature ==========
+    async function signPayload(privateKey, timestamp, method, path, bodyBytes) {
+      const bodyHash = await hashBody(bodyBytes);
+      const payload = `${timestamp}|${method}|${path}|${bodyHash}`;
+      const sig = await crypto.subtle.sign('Ed25519', privateKey, new TextEncoder().encode(payload));
+      return base64urlEncode(new Uint8Array(sig));
+    }
+
+    async function authFetch(url, method, body, signingKey) {
+      const urlObj = new URL(url, location.origin);
+      const path = urlObj.pathname;
+      const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+      const bodyBytes = body instanceof Uint8Array ? body : new TextEncoder().encode(body || '');
+      const sig = await signPayload(signingKey.kp.privateKey, timestamp, method, path, bodyBytes);
+
+      const headers = {
+        'X-GT-DID': didStr,
+        'X-GT-Timestamp': timestamp,
+        'X-GT-Signature': sig,
+      };
+      if (typeof body === 'string') headers['Content-Type'] = 'application/json';
+
+      const resp = await fetch(url, { method, headers, body: bodyBytes });
+      return resp;
+    }
+
+    // ========== Random ID ==========
+    function randomID(len) {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      const arr = new Uint8Array(len);
+      crypto.getRandomValues(arr);
+      return Array.from(arr).map(b => chars[b % chars.length]).join('');
+    }
+
+    // ========== Stepper ==========
+    function goStep(n) {
+      currentStep = n;
+      document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === n));
+      document.querySelectorAll('.step-indicator').forEach((s, i) => {
+        s.classList.remove('active', 'done');
+        if (i === n) s.classList.add('active');
+        else if (i < n) s.classList.add('done');
+      });
+    }
+
+    // ========== Step 0: Generate ==========
+    let idConfirmed = false; // true when ID is confirmed available
+
+    // Disable Generate Keys until ID is confirmed
+    function updateGenerateButton() {
+      document.getElementById('btn-generate').disabled = !idConfirmed;
+    }
+
+    // Reset confirmation when input changes
+    document.getElementById('custom-user-id').addEventListener('input', function() {
+      idConfirmed = false;
+      updateGenerateButton();
+      document.getElementById('id-check-status').textContent = '';
+    });
+
+    // Check Availability button
+    document.getElementById('btn-check-id').addEventListener('click', async function() {
+      const input = document.getElementById('custom-user-id');
+      const val = input.value.trim().toLowerCase();
+      input.value = val;
+      await checkAvailability(val);
+    });
+
+    // Generate Random button
+    document.getElementById('btn-random-id').addEventListener('click', async function() {
+      const val = randomID(8);
+      document.getElementById('custom-user-id').value = val;
+      await checkAvailability(val);
+    });
+
+    async function checkAvailability(val) {
+      const statusEl = document.getElementById('id-check-status');
+      idConfirmed = false;
+      updateGenerateButton();
+
+      if (!val) {
+        statusEl.innerHTML = '';
+        return;
+      }
+      if (!/^[a-z0-9]{3,20}$/.test(val)) {
+        statusEl.style.color = '#f88';
+        statusEl.textContent = 'Use 3\u201320 lowercase letters and numbers only';
+        return;
+      }
+
+      statusEl.style.color = '#888';
+      statusEl.textContent = 'Checking...';
+
+      try {
+        const resp = await fetch(`${DIDS_URL}/u/${val}/did.json`);
+        if (resp.status === 404) {
+          statusEl.style.color = '#8f8';
+          statusEl.innerHTML = '\u2713 Available \u2014 your DID will be: <span class="mono">did:web:' + DID_DOMAIN + ':u:' + val + '</span>';
+          idConfirmed = true;
+          updateGenerateButton();
+        } else {
+          // Taken — suggest alternatives
+          const alt1 = val + String(Math.floor(Math.random() * 90) + 10);
+          const alt2 = val + String(Math.floor(Math.random() * 900) + 100);
+          statusEl.style.color = '#f88';
+          statusEl.innerHTML = '\u2717 Already taken. Try: <a href="#" class="id-suggestion" style="color:#4a9eff;">' + alt1 + '</a> or <a href="#" class="id-suggestion" style="color:#4a9eff;">' + alt2 + '</a>';
+          statusEl.querySelectorAll('.id-suggestion').forEach(link => {
+            link.addEventListener('click', function(e) {
+              e.preventDefault();
+              document.getElementById('custom-user-id').value = this.textContent;
+              checkAvailability(this.textContent);
+            });
+          });
+        }
+      } catch(e) {
+        statusEl.style.color = '#888';
+        statusEl.textContent = 'Could not check availability';
+      }
+    }
+
+    document.getElementById('btn-generate').addEventListener('click', async function() {
+      if (!idConfirmed) return;
+      this.disabled = true;
+      this.textContent = 'Generating...';
+      try {
+        keys.root = await generateEd25519('root');
+        keys.device1 = await generateEd25519('device-1');
+        keys.x25519 = await generateX25519('x25519-1');
+
+        document.getElementById('key-root-pub').textContent = keys.root.pubMultibase;
+        document.getElementById('key-device-pub').textContent = keys.device1.pubMultibase;
+        document.getElementById('key-x25519-pub').textContent = keys.x25519.pubMultibase;
+        document.getElementById('keys-display').style.display = 'block';
+        this.style.display = 'none';
+
+        // Auto-fill nickname with chosen ID (if it doesn't look random)
+        const chosenID = document.getElementById('custom-user-id').value.trim();
+        if (chosenID && /[a-z]{3,}/.test(chosenID)) {
+          const nicknameEl = document.getElementById('claim-nickname');
+          if (!nicknameEl.value) nicknameEl.value = chosenID;
+        }
+      } catch (e) {
+        alert('Key generation failed: ' + e.message + '\n\nEd25519/X25519 require Chrome 113+.');
+        this.disabled = false;
+        this.textContent = 'Generate Keys';
+      }
+    });
+
+    document.getElementById('btn-to-claims').addEventListener('click', () => goStep(1));
+
+    // ========== Step 2: Recovery confirmation ==========
+    const btnToRegister = document.getElementById('btn-to-register');
+    const recoveryConfirm = document.getElementById('recovery-confirm');
+    const recoveryNav = document.getElementById('recovery-nav');
+
+    btnToRegister.addEventListener('click', () => {
+      const passphrase = document.getElementById('recovery-passphrase').value.trim();
+      if (passphrase) {
+        document.getElementById('recovery-show').textContent = passphrase;
+        recoveryConfirm.style.display = 'block';
+        recoveryNav.style.display = 'none';
+      } else {
+        goStep(3);
+        prepareSummary();
+      }
+    });
+
+    document.getElementById('btn-recovery-no').addEventListener('click', () => {
+      recoveryConfirm.style.display = 'none';
+      recoveryNav.style.display = 'flex';
+    });
+
+    document.getElementById('btn-recovery-yes').addEventListener('click', () => {
+      goStep(3);
+      prepareSummary();
+    });
+
+    // ========== Step 3: Summary ==========
+    function prepareSummary() {
+      const claims = gatherClaims();
+      const passphrase = document.getElementById('recovery-passphrase').value.trim();
+      const claimKeys = Object.keys(claims);
+
+      let html = '<div style="margin-bottom:8px;"><strong>Root key:</strong> <span class="mono">' +
+        keys.root.pubMultibase.slice(0, 16) + '...</span></div>';
+      html += '<div style="margin-bottom:8px;"><strong>Claims:</strong> ' +
+        (claimKeys.length ? claimKeys.join(', ') : 'none') + '</div>';
+      html += '<div><strong>Recovery:</strong> ' +
+        (passphrase ? 'enabled (passphrase set)' : 'not set') + '</div>';
+
+      document.getElementById('reg-summary').innerHTML = html;
+      document.getElementById('reg-nav').style.display = 'flex';
+    }
+
+    function gatherClaims() {
+      const claims = {};
+      for (const field of ['name', 'familyname', 'nickname', 'city', 'country', 'alma_mater', 'about', 'keywords']) {
+        const v = document.getElementById('claim-' + field).value.trim();
+        if (v) claims[field] = v;
+      }
+      return claims;
+    }
+
+    async function gatherClaimsWithPrivate() {
+      const claims = gatherClaims();
+      const email = document.getElementById('claim-email').value.trim();
+      if (email) {
+        claims['email_hash'] = 'sha256-' + await sha256Hex(email.toLowerCase());
+      }
+      const phone = document.getElementById('claim-phone').value.trim();
+      if (phone) {
+        claims['phone_hash'] = 'sha256-' + await sha256Hex(phone);
+      }
+      return claims;
+    }
+
+    // ========== Step 3: Register ==========
+    document.getElementById('btn-register').addEventListener('click', async function() {
+      this.disabled = true;
+      document.getElementById('reg-nav').style.display = 'none';
+      document.getElementById('reg-error').style.display = 'none';
+      const prog = document.getElementById('progress');
+      prog.innerHTML = '';
+
+      function addStep(text) {
+        const div = document.createElement('div');
+        div.className = 'progress-step running';
+        div.textContent = '... ' + text;
+        prog.appendChild(div);
+        return div;
+      }
+      function markOk(div) { div.className = 'progress-step ok'; div.textContent = '\u2713 ' + div.textContent.slice(4); }
+      function markFail(div, err) { div.className = 'progress-step fail'; div.textContent = '\u2717 ' + div.textContent.slice(4) + ' \u2014 ' + err; }
+
+      try {
+        // 0. Use confirmed user ID
+        let step = addStep('Setting user ID');
+        userID = document.getElementById('custom-user-id').value.trim().toLowerCase();
+        if (!userID || !/^[a-z0-9]{3,20}$/.test(userID)) {
+          throw new Error('Invalid ID: use 3–20 lowercase letters and numbers only');
+        }
+        didStr = `did:web:${DID_DOMAIN}:u:${userID}`;
+        markOk(step);
+
+        // 1. Verify ID still available
+        step = addStep('Verifying ID availability');
+        const checkResp = await fetch(`${DIDS_URL}/u/${userID}/did.json`);
+        if (checkResp.status !== 404) {
+          throw new Error('This ID was taken since you checked. Please go back and choose another.');
+        }
+        markOk(step);
+
+        // 2. Build DID document
+        step = addStep('Building DID document');
+        const passphrase = document.getElementById('recovery-passphrase').value.trim();
+        const didDoc = buildDIDDocument(passphrase);
+        savedDidDoc = didDoc; // save for identity file
+        const didDocJSON = JSON.stringify(didDoc);
+        const didDocBytes = new TextEncoder().encode(didDocJSON);
+        const didDocHex = await sha256Hex(didDocBytes);
+        markOk(step);
+
+        // 3. PUT DID to DIDS server
+        step = addStep('Registering DID');
+        const putDIDResp = await authFetch(
+          `${DIDS_URL}/api/v1/did/${userID}`, 'PUT', didDocJSON, keys.root
+        );
+        if (!putDIDResp.ok) throw new Error('PUT DID: ' + putDIDResp.status + ' ' + await putDIDResp.text());
+        markOk(step);
+
+        // 4. PUT DID blob to storage
+        step = addStep('Storing DID blob');
+        const putBlobResp = await authFetch(
+          `${STORAGE_URL}/gt/v1/${didStr}/blobs/sha256/${didDocHex}`, 'PUT', didDocJSON, keys.root
+        );
+        if (!putBlobResp.ok && putBlobResp.status !== 409) throw new Error('PUT DID blob: ' + putBlobResp.status);
+        markOk(step);
+
+        // 5. DIDLog genesis entry
+        step = addStep('Creating DID log');
+        const logEntry = {
+          version: 1,
+          type: 'Genesis',
+          did: didStr,
+          prev: '',
+          didDocHash: 'sha256-' + didDocHex,
+          createdAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        };
+        const logJSON = JSON.stringify(logEntry);
+        const logBytes = new TextEncoder().encode(logJSON);
+        const logHex = await sha256Hex(logBytes);
+
+        const putLogResp = await authFetch(
+          `${STORAGE_URL}/gt/v1/${didStr}/blobs/sha256/${logHex}`, 'PUT', logJSON, keys.root
+        );
+        if (!putLogResp.ok && putLogResp.status !== 409) throw new Error('PUT log blob: ' + putLogResp.status);
+
+        const putLogHeadResp = await authFetch(
+          `${STORAGE_URL}/gt/v1/${didStr}/heads/didlog`, 'PUT',
+          JSON.stringify({ expected: '', head: 'sha256-' + logHex }), keys.root
+        );
+        if (!putLogHeadResp.ok) throw new Error('PUT didlog head: ' + putLogHeadResp.status);
+        markOk(step);
+
+        // 6. Recovery key (if passphrase set)
+        if (passphrase) {
+          step = addStep('Encrypting and storing recovery key');
+          const encBlob = await encryptRootKeyBrowser(
+            keys.root.seed, keys.root.pubRaw, passphrase,
+            document.getElementById('recovery-hint').value.trim()
+          );
+          encryptedRootKeyBlob = JSON.parse(encBlob); // save for identity file
+          const encBlobBytes = new TextEncoder().encode(encBlob);
+          const encHex = await sha256Hex(encBlobBytes);
+
+          const putEncResp = await authFetch(
+            `${STORAGE_URL}/gt/v1/${didStr}/blobs/sha256/${encHex}`, 'PUT', encBlob, keys.root
+          );
+          if (!putEncResp.ok && putEncResp.status !== 409) throw new Error('PUT recovery blob: ' + putEncResp.status);
+
+          const putRecHeadResp = await authFetch(
+            `${STORAGE_URL}/gt/v1/${didStr}/heads/recovery-key`, 'PUT',
+            JSON.stringify({ expected: '', head: 'sha256-' + encHex }), keys.root
+          );
+          if (!putRecHeadResp.ok) throw new Error('PUT recovery-key head: ' + putRecHeadResp.status);
+          markOk(step);
+        }
+
+        // 7. Claims (if any)
+        const claims = await gatherClaimsWithPrivate();
+        if (Object.keys(claims).length > 0) {
+          step = addStep('Storing claims');
+          const manifest = {
+            version: 1,
+            did: didStr,
+            claims: claims,
+            createdAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+          };
+          const manifestJSON = JSON.stringify(manifest);
+          const manifestBytes = new TextEncoder().encode(manifestJSON);
+          const manifestHex = await sha256Hex(manifestBytes);
+
+          const putManResp = await authFetch(
+            `${STORAGE_URL}/gt/v1/${didStr}/blobs/sha256/${manifestHex}`, 'PUT', manifestJSON, keys.root
+          );
+          if (!putManResp.ok && putManResp.status !== 409) throw new Error('PUT claims blob: ' + putManResp.status);
+
+          const putClaimsHeadResp = await authFetch(
+            `${STORAGE_URL}/gt/v1/${didStr}/heads/claims`, 'PUT',
+            JSON.stringify({ expected: '', head: 'sha256-' + manifestHex }), keys.root
+          );
+          if (!putClaimsHeadResp.ok) throw new Error('PUT claims head: ' + putClaimsHeadResp.status);
+          markOk(step);
+        }
+
+        // Done — prepare download
+        step = addStep('Registration complete!');
+        markOk(step);
+        prepareDownload();
+        goStep(4);
+
+      } catch (e) {
+        const errDiv = document.getElementById('reg-error');
+        errDiv.textContent = e.message;
+        errDiv.style.display = 'block';
+        document.getElementById('reg-nav').style.display = 'flex';
+        this.disabled = false;
+      }
+    });
+
+    // ========== DID Document Builder ==========
+    function buildDIDDocument(passphrase) {
+      const vm = (kid, type, pubMultibase) => ({
+        id: `${didStr}#${kid}`,
+        type: type,
+        controller: didStr,
+        publicKeyMultibase: pubMultibase,
+      });
+
+      const doc = {
+        '@context': ['https://www.w3.org/ns/did/v1'],
+        id: didStr,
+        verificationMethod: [
+          vm('root', 'Ed25519VerificationKey2020', keys.root.pubMultibase),
+          vm('device-1', 'Ed25519VerificationKey2020', keys.device1.pubMultibase),
+          vm('x25519-1', 'X25519KeyAgreementKey2020', keys.x25519.pubMultibase),
+        ],
+        authentication: [`${didStr}#root`],
+        assertionMethod: [`${didStr}#root`],
+        capabilityInvocation: [`${didStr}#root`],
+        capabilityDelegation: [`${didStr}#root`],
+        keyAgreement: [`${didStr}#x25519-1`],
+        service: [{
+          id: `${didStr}#pod`,
+          type: 'SolidPod',
+          serviceEndpoint: `${STORAGE_URL}/gt/v1/${didStr}`,
+        }],
+      };
+
+      if (passphrase) {
+        doc.recoveryPolicy = {
+          type: 'PassphraseEncryptedKey',
+          storageHead: 'recovery-key',
+          setAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        };
+      }
+
+      return doc;
+    }
+
+    // ========== Recovery Encryption (Browser) ==========
+    async function encryptRootKeyBrowser(seed, pubRaw, passphrase, hint) {
+      // Generate salt
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+
+      // Argon2id KDF via hash-wasm
+      const derived = await hashwasm.argon2id({
+        password: new TextEncoder().encode(passphrase),
+        salt: salt,
+        parallelism: 4,
+        iterations: 3,
+        memorySize: 65536, // 64 MB
+        hashLength: 32,
+        outputType: 'binary',
+      });
+
+      // AES-256-GCM
+      const aesKey = await crypto.subtle.importKey('raw', derived, 'AES-GCM', false, ['encrypt']);
+      const nonce = crypto.getRandomValues(new Uint8Array(12));
+      const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: nonce }, aesKey, seed
+      ));
+
+      const pubMultibase = 'z' + base58Encode(pubRaw);
+
+      // base64 standard encoding (matching Go's base64.StdEncoding)
+      function b64Std(bytes) {
+        let s = '';
+        for (const b of bytes) s += String.fromCharCode(b);
+        return btoa(s);
+      }
+
+      const blob = {
+        type: 'EncryptedRootKeyV1',
+        alg: 'argon2id+aes256gcm',
+        publicKeyMultibase: pubMultibase,
+        kdf: {
+          alg: 'argon2id',
+          time: 3,
+          memory: 65536,
+          threads: 4,
+          saltB64: b64Std(salt),
+        },
+        nonceB64: b64Std(nonce),
+        ciphertextB64: b64Std(ciphertext),
+        createdAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+      };
+
+      if (hint) blob.hint = hint;
+
+      return JSON.stringify(blob);
+    }
+
+    // ========== Key File Builder ==========
+    function buildKeyFile(keyObj) {
+      const file = {
+        kty: keyObj.kty,
+        kid: keyObj.kid,
+        createdAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        publicKeyMultibase: keyObj.pubMultibase,
+      };
+      if (keyObj.kty === 'Ed25519') {
+        file.privateKeyB64Url = base64urlEncode(keyObj.privKeyFull);
+      } else {
+        // X25519
+        file.privateKeyB64Url = base64urlEncode(keyObj.privRaw);
+      }
+      return JSON.stringify(file, null, 2);
+    }
+
+    // ========== Identity File Builder (v2) ==========
+    function buildIdentityFile() {
+      const rootPublicOnly = {
+        kty: keys.root.kty,
+        kid: keys.root.kid,
+        publicKeyMultibase: keys.root.pubMultibase,
+      };
+      const identity = {
+        version: 2,
+        did: didStr,
+        didDocument: savedDidDoc,
+        keys: {
+          root: rootPublicOnly,
+          'device-1': JSON.parse(buildKeyFile(keys.device1)),
+          'x25519-1': JSON.parse(buildKeyFile(keys.x25519)),
+        },
+      };
+      if (encryptedRootKeyBlob) {
+        identity.encryptedRootKey = encryptedRootKeyBlob;
+      }
+      return JSON.stringify(identity, null, 2);
+    }
+
+    // ========== Root Key File Builder ==========
+    function buildRootKeyFile() {
+      return JSON.stringify({
+        kty: keys.root.kty,
+        kid: keys.root.kid,
+        publicKeyMultibase: keys.root.pubMultibase,
+        privateKeyB64Url: base64urlEncode(keys.root.privKeyFull),
+      }, null, 2);
+    }
+
+    // ========== Download ==========
+    function prepareDownload() {
+      document.getElementById('final-did').textContent = didStr;
+      const container = document.getElementById('download-links');
+      container.innerHTML = '';
+
+      const identityData = buildIdentityFile();
+      const blob = new Blob([identityData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${userID}-identity.json`;
+      a.textContent = `Identity File (${userID}-identity.json)`;
+      container.appendChild(a);
+    }
+
+    // Root key download with warning
+    document.getElementById('btn-download-root').addEventListener('click', function() {
+      const modal = document.getElementById('root-key-modal');
+      modal.style.display = 'flex';
+    });
+
+    document.getElementById('btn-root-cancel').addEventListener('click', function() {
+      document.getElementById('root-key-modal').style.display = 'none';
+    });
+
+    document.getElementById('btn-root-confirm').addEventListener('click', function() {
+      document.getElementById('root-key-modal').style.display = 'none';
+      const rootData = buildRootKeyFile();
+      const blob = new Blob([rootData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${userID}-root-key.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

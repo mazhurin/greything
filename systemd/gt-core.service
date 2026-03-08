@@ -1,0 +1,21 @@
+[Unit]
+Description=GreyThing Core Storage
+After=network.target
+
+[Service]
+Type=simple
+User=gt
+Group=gt
+WorkingDirectory=/home/gt
+ExecStart=/home/gt/bin/gt-core -data-path=/var/lib/greything/core -port=8090 -did-url=https://did.greything.com -dids-internal-url=http://127.0.0.1:8080
+Restart=always
+RestartSec=5
+
+ReadWritePaths=/var/lib/greything/core
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gt-core
+
+[Install]
+WantedBy=multi-user.target

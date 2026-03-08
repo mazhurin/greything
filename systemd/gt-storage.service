@@ -1,0 +1,23 @@
+[Unit]
+Description=GreyThing Storage Service
+After=network.target
+
+[Service]
+Type=simple
+User=gt
+Group=gt
+WorkingDirectory=/home/gt
+ExecStart=/home/gt/bin/gt-storage --hot-path=/var/lib/greything/storage/hot --cold-path=/var/lib/greything/storage/cold --port=8083 --did-url=https://did.greything.com
+Restart=always
+RestartSec=5
+
+# Security hardening (minimal for now)
+ReadWritePaths=/var/lib/greything/storage
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gt-storage
+
+[Install]
+WantedBy=multi-user.target

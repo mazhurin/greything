@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GreyThing DID Resolver</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    h1 { color: #fff; }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 200px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #2a2a2a;
+      color: #fff;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #4a9eff;
+      color: #fff;
+    }
+    button:hover { background: #3a8eef; }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #2a2a2a;
+      border-radius: 4px;
+      display: none;
+    }
+    #result.show { display: block; }
+    #result a { color: #4a9eff; word-break: break-all; }
+    #error { color: #ff6b6b; }
+    .field { margin: 10px 0; }
+    .label { color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+    <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <g fill="#e0e0e0">
+        <rect x="18" y="12" width="10" height="40" rx="3"/>
+        <rect x="36" y="12" width="10" height="40" rx="3"/>
+      </g>
+    </svg>
+    <h1 style="margin: 0;">GreyThing DID Resolver</h1>
+  </div>
+  <form id="form">
+    <input type="text" id="username" placeholder="alice" autocomplete="off">
+    <button type="submit">Resolve</button>
+  </form>
+  <div id="result">
+    <div id="error"></div>
+    <div id="fields"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('form');
+    const input = document.getElementById('username');
+    const result = document.getElementById('result');
+    const error = document.getElementById('error');
+    const fields = document.getElementById('fields');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = input.value.trim();
+      if (!username) return;
+
+      error.textContent = '';
+      fields.innerHTML = '';
+      result.classList.add('show');
+
+      try {
+        const res = await fetch(`/.well-known/greything/names/${username}.json`);
+        if (!res.ok) throw new Error('User not found');
+        const data = await res.json();
+
+        fields.innerHTML = `
+          <div class="field">
+            <div class="label">Name</div>
+            <div>${data.name}</div>
+          </div>
+          <div class="field">
+            <div class="label">DID</div>
+            <div><code>${data.did}</code></div>
+          </div>
+          <div class="field">
+            <div class="label">DID Document URL</div>
+            <div><a href="${data.didDocumentUrl}" target="_blank">${data.didDocumentUrl}</a></div>
+          </div>
+        `;
+      } catch (err) {
+        error.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>

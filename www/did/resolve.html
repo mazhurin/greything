@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GreyThing Discovery</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    h1 { color: #fff; margin: 0; }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 300px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #2a2a2a;
+      color: #fff;
+    }
+    input::placeholder { color: #666; }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #4a9eff;
+      color: #fff;
+    }
+    button:hover { background: #3a8eef; }
+    #results {
+      margin-top: 20px;
+    }
+    .card {
+      background: #2a2a2a;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .card-did {
+      font-family: monospace;
+      font-size: 13px;
+      color: #4a9eff;
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+    .card-did a { color: #4a9eff; text-decoration: none; }
+    .card-did a:hover { text-decoration: underline; }
+    .claims-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .claims-table td {
+      padding: 3px 8px;
+      font-size: 14px;
+      vertical-align: top;
+    }
+    .claims-table td:first-child {
+      color: #888;
+      width: 120px;
+      white-space: nowrap;
+    }
+    .empty { color: #666; font-style: italic; margin-top: 12px; }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .count { color: #888; font-size: 14px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <g fill="#e0e0e0">
+        <rect x="18" y="12" width="10" height="40" rx="3"/>
+        <rect x="36" y="12" width="10" height="40" rx="3"/>
+      </g>
+    </svg>
+    <h1>GreyThing Discovery</h1>
+  </div>
+
+  <form id="form">
+    <input type="text" id="query" placeholder="Search by name, city, keyword..." autocomplete="off" autofocus>
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="results"></div>
+
+  <script>
+    const form = document.getElementById('form');
+    const input = document.getElementById('query');
+    const results = document.getElementById('results');
+
+    const HIDDEN_KEYS = new Set(['phone_hash', 'email_hash']);
+    const LABEL = {
+      name: 'Name',
+      familyname: 'Family name',
+      nickname: 'Nickname',
+      city: 'City',
+      country: 'Country',
+      alma_mater: 'Alma mater',
+      about: 'About',
+      keywords: 'Keywords',
+    };
+
+    function hexEncode(bytes) {
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    async function sha256Hex(str) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return hexEncode(new Uint8Array(buf));
+    }
+
+    function claimLabel(key) {
+      return LABEL[key] || key;
+    }
+
+    function renderCard(entry) {
+      const did = entry.did;
+      const didDocUrl = 'https://did.greything.com/' +
+        did.replace('did:web:did.greything.com:', '').replace(/:/g, '/') +
+        '/did.json';
+
+      const claims = Object.entries(entry.claims || {})
+        .filter(([k]) => !HIDDEN_KEYS.has(k))
+        .sort(([a], [b]) => a.localeCompare(b));
+
+      let rows = '';
+      for (const [key, value] of claims) {
+        rows += `<tr><td>${claimLabel(key)}</td><td>${esc(value)}</td></tr>`;
+      }
+
+      return `
+        <div class="card">
+          <div class="card-did"><a href="${didDocUrl}" target="_blank">${did}</a></div>
+          ${rows ? `<table class="claims-table">${rows}</table>` : '<div class="empty">No public claims</div>'}
+        </div>`;
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // Detect if input looks like phone or email
+    function looksLikePhone(s) { return /^\+?\d[\d\s\-()]{5,}$/.test(s); }
+    function looksLikeEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (!q) return;
+
+      results.innerHTML = '<div class="empty">Searching...</div>';
+
+      try {
+        let res;
+        if (looksLikePhone(q)) {
+          // Hash phone and lookup
+          const normalized = q.replace(/[\s\-()]/g, '');
+          const hash = 'sha256-' + await sha256Hex(normalized);
+          res = await fetch('/api/v1/lookup?key=phone_hash&value=' + encodeURIComponent(hash));
+        } else if (looksLikeEmail(q)) {
+          // Hash email (lowercase) and lookup
+          const hash = 'sha256-' + await sha256Hex(q.toLowerCase());
+          res = await fetch('/api/v1/lookup?key=email_hash&value=' + encodeURIComponent(hash));
+        } else {
+          res = await fetch('/api/v1/search?q=' + encodeURIComponent(q));
+        }
+
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+          results.innerHTML = '<div class="empty">No results found</div>';
+          return;
+        }
+
+        results.innerHTML =
+          `<div class="count">${data.length} result${data.length > 1 ? 's' : ''}</div>` +
+          data.map(renderCard).join('');
+      } catch (err) {
+        results.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+      }
+    });
+  </script>
+</body>
+</html>

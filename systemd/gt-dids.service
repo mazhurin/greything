@@ -1,0 +1,21 @@
+[Unit]
+Description=GreyThing DIDS Server
+After=network.target
+
+[Service]
+Type=simple
+User=gt
+Group=gt
+WorkingDirectory=/home/gt
+ExecStart=/home/gt/bin/gt-dids -port=8080 -did-domain=did.greything.com -did-doc-path=/var/www/did -storage-url=https://storage.greything.com -storage-internal-url=http://127.0.0.1:8090
+Restart=always
+RestartSec=5
+
+ReadWritePaths=/var/www/did
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gt-dids
+
+[Install]
+WantedBy=multi-user.target

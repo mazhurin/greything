@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GreyThing — Profile</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    h1 { color: #fff; margin: 0; }
+    h2 { color: #fff; margin: 0 0 16px 0; font-size: 20px; }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: #2a2a2a;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+    label:first-child { margin-top: 0; }
+    input[type="text"], input[type="tel"], textarea {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: inherit;
+    }
+    input[type="file"] {
+      color: #888;
+      font-size: 14px;
+    }
+    input::placeholder, textarea::placeholder { color: #555; }
+    textarea { resize: vertical; min-height: 60px; }
+    button {
+      padding: 10px 24px;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #4a9eff;
+      color: #fff;
+      margin-top: 16px;
+    }
+    button:hover { background: #3a8eef; }
+    button:disabled {
+      background: #444;
+      color: #888;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #3a3a3a;
+      color: #ccc;
+    }
+    .btn-secondary:hover { background: #4a4a4a; }
+    .btn-small {
+      padding: 6px 14px;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .mono {
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      color: #4a9eff;
+    }
+    .progress-step {
+      padding: 4px 0;
+      font-size: 14px;
+      color: #888;
+    }
+    .progress-step.ok { color: #8f8; }
+    .progress-step.fail { color: #f88; }
+    .progress-step.running { color: #ff8; }
+    .error { color: #f88; margin-top: 8px; }
+    .success { color: #8f8; margin-top: 8px; }
+    .saved-key-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .saved-key-info span { color: #8f8; font-size: 13px; }
+    .saved-key-info button { margin-top: 0; }
+    #login-section, #editor-section { display: block; }
+    #editor-section { display: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <g fill="#e0e0e0">
+        <rect x="18" y="12" width="10" height="40" rx="3"/>
+        <rect x="36" y="12" width="10" height="40" rx="3"/>
+      </g>
+    </svg>
+    <h1>GreyThing Profile</h1>
+  </div>
+
+  <!-- Login -->
+  <div id="login-section">
+    <h2>Sign In</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      Enter your user ID and load your key file (device-1 or root) to edit your profile.
+    </p>
+    <div class="card">
+      <label>User ID</label>
+      <input type="text" id="user-id" placeholder="e.g. ab3x9kqp" autocomplete="off">
+      <label>Key file (Ed25519 JSON)</label>
+      <div id="key-file-area">
+        <input type="file" id="key-file" accept=".json">
+      </div>
+      <div id="saved-key-area" style="display:none;">
+        <div class="saved-key-info">
+          <span id="saved-key-label"></span>
+          <button class="btn-secondary btn-small" id="btn-forget-key">Forget</button>
+          <button class="btn-secondary btn-small" id="btn-change-key">Load different</button>
+        </div>
+      </div>
+    </div>
+    <button id="btn-login">Sign In</button>
+    <div id="login-error" class="error" style="display:none;"></div>
+  </div>
+
+  <!-- Editor -->
+  <div id="editor-section">
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="color:#888; font-size:12px;">Signed in as</div>
+          <div class="mono" id="editor-did"></div>
+        </div>
+        <button class="btn-secondary btn-small" id="btn-logout">Sign Out</button>
+      </div>
+    </div>
+
+    <h2>Public Claims</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">Edit your public profile. All fields are optional.</p>
+    <div class="card">
+      <label>Name</label>
+      <input type="text" id="edit-name" placeholder="Alice">
+      <label>Family name</label>
+      <input type="text" id="edit-familyname" placeholder="Smith">
+      <label>Nickname</label>
+      <input type="text" id="edit-nickname" placeholder="ali">
+      <label>City</label>
+      <input type="text" id="edit-city" placeholder="London">
+      <label>Country</label>
+      <input type="text" id="edit-country" placeholder="UK">
+      <label>Alma mater</label>
+      <input type="text" id="edit-alma_mater" placeholder="University">
+      <label>About</label>
+      <textarea id="edit-about" placeholder="A few words about yourself"></textarea>
+      <label>Keywords</label>
+      <input type="text" id="edit-keywords" placeholder="developer, crypto, music">
+      <label>Email (stored as hash only)</label>
+      <input type="text" id="edit-email" placeholder="alice@example.com">
+      <label>Phone (stored as hash only)</label>
+      <input type="tel" id="edit-phone" placeholder="+1234567890">
+    </div>
+    <button id="btn-save">Save Claims</button>
+    <div id="save-progress" style="margin-top:16px;"></div>
+    <div id="save-error" class="error" style="display:none;"></div>
+    <div id="save-success" class="success" style="display:none;"></div>
+  </div>
+
+  <script>
+    // ========== Config ==========
+    const STORAGE_URL = 'https://storage.greything.com';
+    const DID_DOMAIN = 'did.greything.com';
+    const LS_KEY_PREFIX = 'gt_key_';
+
+    // ========== State ==========
+    let userID = '';
+    let didStr = '';
+    let signingKey = null; // { privateKey (CryptoKey), kid }
+    let currentHeadHash = ''; // current claims head ('' if none)
+
+    // ========== Base58 ==========
+    const B58_ALPHA = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    function base58Encode(bytes) {
+      let num = 0n;
+      for (const b of bytes) num = num * 256n + BigInt(b);
+      let s = '';
+      while (num > 0n) { s = B58_ALPHA[Number(num % 58n)] + s; num = num / 58n; }
+      for (const b of bytes) { if (b === 0) s = '1' + s; else break; }
+      return s || '1';
+    }
+
+    // ========== Hex / SHA-256 ==========
+    function hexEncode(bytes) {
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    async function sha256Hex(data) {
+      const buf = await crypto.subtle.digest('SHA-256', data instanceof Uint8Array ? data : new TextEncoder().encode(data));
+      return hexEncode(new Uint8Array(buf));
+    }
+    async function hashBody(bodyBytes) {
+      return 'sha256-' + await sha256Hex(bodyBytes);
+    }
+
+    // ========== Base64URL ==========
+    function base64urlEncode(bytes) {
+      const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      let s = '';
+      for (const b of arr) s += String.fromCharCode(b);
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function base64urlDecode(s) {
+      s = s.replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      const bin = atob(s);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return arr;
+    }
+
+    // ========== Key Import ==========
+    async function importEd25519Key(keyFileJSON) {
+      if (keyFileJSON.kty !== 'Ed25519') throw new Error('Key must be Ed25519, got ' + keyFileJSON.kty);
+      const raw = base64urlDecode(keyFileJSON.privateKeyB64Url);
+      const seed = raw.slice(0, 32);
+      const pub = raw.slice(32, 64);
+      const jwk = {
+        kty: 'OKP', crv: 'Ed25519',
+        d: base64urlEncode(seed),
+        x: base64urlEncode(pub),
+      };
+      const privateKey = await crypto.subtle.importKey('jwk', jwk, 'Ed25519', false, ['sign']);
+      return { privateKey, kid: keyFileJSON.kid, pubMultibase: keyFileJSON.publicKeyMultibase };
+    }
+
+    // ========== Auth Signature ==========
+    async function signPayload(privateKey, timestamp, method, path, bodyBytes) {
+      const bodyHash = await hashBody(bodyBytes);
+      const payload = `${timestamp}|${method}|${path}|${bodyHash}`;
+      const sig = await crypto.subtle.sign('Ed25519', privateKey, new TextEncoder().encode(payload));
+      return base64urlEncode(new Uint8Array(sig));
+    }
+
+    async function authFetch(url, method, body) {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
+      const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+      const bodyBytes = body instanceof Uint8Array ? body : new TextEncoder().encode(body || '');
+      const sig = await signPayload(signingKey.privateKey, timestamp, method, path, bodyBytes);
+
+      const headers = {
+        'X-GT-DID': didStr,
+        'X-GT-Timestamp': timestamp,
+        'X-GT-Signature': sig,
+      };
+      if (typeof body === 'string') headers['Content-Type'] = 'application/json';
+
+      return fetch(url, { method, headers, body: bodyBytes });
+    }
+
+    // ========== LocalStorage ==========
+    function saveKeyToStorage(uid, keyFileJSON) {
+      try {
+        localStorage.setItem(LS_KEY_PREFIX + uid, JSON.stringify(keyFileJSON));
+      } catch (e) { /* ignore quota errors */ }
+    }
+    function loadKeyFromStorage(uid) {
+      try {
+        const s = localStorage.getItem(LS_KEY_PREFIX + uid);
+        return s ? JSON.parse(s) : null;
+      } catch (e) { return null; }
+    }
+    function forgetKeyFromStorage(uid) {
+      localStorage.removeItem(LS_KEY_PREFIX + uid);
+    }
+
+    // ========== Login ==========
+    const CLAIM_FIELDS = ['name', 'familyname', 'nickname', 'city', 'country', 'alma_mater', 'about', 'keywords'];
+
+    function showLoginError(msg) {
+      const el = document.getElementById('login-error');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    // Check for saved key when user ID changes
+    document.getElementById('user-id').addEventListener('input', function() {
+      const uid = this.value.trim();
+      const saved = uid ? loadKeyFromStorage(uid) : null;
+      if (saved) {
+        document.getElementById('key-file-area').style.display = 'none';
+        document.getElementById('saved-key-area').style.display = 'block';
+        document.getElementById('saved-key-label').textContent = 'Saved key: ' + saved.kid + ' (' + saved.publicKeyMultibase.slice(0, 12) + '...)';
+      } else {
+        document.getElementById('key-file-area').style.display = 'block';
+        document.getElementById('saved-key-area').style.display = 'none';
+      }
+    });
+
+    document.getElementById('btn-forget-key').addEventListener('click', function() {
+      const uid = document.getElementById('user-id').value.trim();
+      if (uid) forgetKeyFromStorage(uid);
+      document.getElementById('key-file-area').style.display = 'block';
+      document.getElementById('saved-key-area').style.display = 'none';
+    });
+
+    document.getElementById('btn-change-key').addEventListener('click', function() {
+      document.getElementById('key-file-area').style.display = 'block';
+      document.getElementById('saved-key-area').style.display = 'none';
+    });
+
+    document.getElementById('btn-login').addEventListener('click', async function() {
+      document.getElementById('login-error').style.display = 'none';
+      this.disabled = true;
+      this.textContent = 'Signing in...';
+
+      try {
+        let input = document.getElementById('user-id').value.trim();
+        if (!input) throw new Error('Enter your user ID');
+
+        // Accept: bare ID, full DID, or URL
+        const didPrefix = `did:web:${DID_DOMAIN}:u:`;
+        const urlMatch = input.match(/\/u\/([a-z0-9]+)/);
+        if (urlMatch) {
+          userID = urlMatch[1];
+        } else if (input.startsWith(didPrefix)) {
+          userID = input.slice(didPrefix.length);
+        } else if (input.startsWith('did:') || input.startsWith('http')) {
+          throw new Error('Unrecognized format');
+        } else {
+          userID = input;
+        }
+
+        didStr = didPrefix + userID;
+
+        // Try saved key first, then file picker
+        let keyFileJSON = loadKeyFromStorage(userID);
+        const fileInput = document.getElementById('key-file');
+
+        if (!keyFileJSON || document.getElementById('key-file-area').style.display !== 'none') {
+          // Need to read from file picker
+          if (!fileInput.files.length) throw new Error('Select a key file');
+          const text = await fileInput.files[0].text();
+          keyFileJSON = JSON.parse(text);
+        }
+
+        signingKey = await importEd25519Key(keyFileJSON);
+
+        // Verify DID exists
+        const resp = await fetch(`/u/${userID}/did.json`);
+        if (resp.status === 404) throw new Error('DID not found: ' + didStr);
+        if (!resp.ok) throw new Error('Failed to fetch DID: ' + resp.status);
+
+        // Save key for next time
+        saveKeyToStorage(userID, keyFileJSON);
+
+        // Load current claims
+        await loadClaims();
+
+        // Show editor
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('editor-section').style.display = 'block';
+        document.getElementById('editor-did').textContent = didStr;
+
+      } catch (e) {
+        showLoginError(e.message);
+      } finally {
+        this.disabled = false;
+        this.textContent = 'Sign In';
+      }
+    });
+
+    // ========== Logout ==========
+    document.getElementById('btn-logout').addEventListener('click', function() {
+      signingKey = null;
+      currentHeadHash = '';
+      for (const f of CLAIM_FIELDS) document.getElementById('edit-' + f).value = '';
+      document.getElementById('edit-phone').value = '';
+      document.getElementById('login-section').style.display = 'block';
+      document.getElementById('editor-section').style.display = 'none';
+      document.getElementById('save-progress').innerHTML = '';
+      document.getElementById('save-error').style.display = 'none';
+      document.getElementById('save-success').style.display = 'none';
+    });
+
+    // ========== Load Claims ==========
+    async function loadClaims() {
+      // Reset form
+      for (const f of CLAIM_FIELDS) document.getElementById('edit-' + f).value = '';
+      document.getElementById('edit-email').value = '';
+      document.getElementById('edit-phone').value = '';
+      currentHeadHash = '';
+
+      // GET claims head
+      const headResp = await fetch(`${STORAGE_URL}/gt/v1/${didStr}/heads/claims`);
+      if (headResp.status === 404) return; // no claims yet
+      if (!headResp.ok) throw new Error('Failed to fetch claims head: ' + headResp.status);
+
+      const headData = await headResp.json();
+      currentHeadHash = headData.head; // "sha256-abc..."
+
+      // GET manifest blob
+      const hex = currentHeadHash.replace('sha256-', '');
+      const blobResp = await fetch(`${STORAGE_URL}/gt/v1/${didStr}/blobs/sha256/${hex}`);
+      if (!blobResp.ok) throw new Error('Failed to fetch claims blob: ' + blobResp.status);
+
+      const manifest = await blobResp.json();
+      const claims = manifest.claims || {};
+
+      // Populate form
+      for (const f of CLAIM_FIELDS) {
+        if (claims[f]) document.getElementById('edit-' + f).value = claims[f];
+      }
+      // Phone is stored as hash — can't reverse it, leave blank
+    }
+
+    // ========== Save Claims ==========
+    document.getElementById('btn-save').addEventListener('click', async function() {
+      this.disabled = true;
+      const prog = document.getElementById('save-progress');
+      prog.innerHTML = '';
+      document.getElementById('save-error').style.display = 'none';
+      document.getElementById('save-success').style.display = 'none';
+
+      function addStep(text) {
+        const div = document.createElement('div');
+        div.className = 'progress-step running';
+        div.textContent = '... ' + text;
+        prog.appendChild(div);
+        return div;
+      }
+      function markOk(div) { div.className = 'progress-step ok'; div.textContent = '\u2713 ' + div.textContent.slice(4); }
+
+      try {
+        // Gather claims
+        let step = addStep('Building claims');
+        const claims = {};
+        for (const f of CLAIM_FIELDS) {
+          const v = document.getElementById('edit-' + f).value.trim();
+          if (v) claims[f] = v;
+        }
+        const email = document.getElementById('edit-email').value.trim();
+        if (email) {
+          claims['email_hash'] = 'sha256-' + await sha256Hex(email.toLowerCase());
+        }
+        const phone = document.getElementById('edit-phone').value.trim();
+        if (phone) {
+          claims['phone_hash'] = 'sha256-' + await sha256Hex(phone);
+        }
+
+        const manifest = {
+          version: 1,
+          did: didStr,
+          claims: claims,
+          createdAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        };
+        const manifestJSON = JSON.stringify(manifest);
+        const manifestBytes = new TextEncoder().encode(manifestJSON);
+        const manifestHex = await sha256Hex(manifestBytes);
+        markOk(step);
+
+        // PUT blob
+        step = addStep('Storing claims blob');
+        const putResp = await authFetch(
+          `${STORAGE_URL}/gt/v1/${didStr}/blobs/sha256/${manifestHex}`, 'PUT', manifestJSON
+        );
+        if (!putResp.ok && putResp.status !== 409) throw new Error('PUT blob: ' + putResp.status + ' ' + await putResp.text());
+        markOk(step);
+
+        // CAS update head
+        step = addStep('Updating claims head');
+        const newHead = 'sha256-' + manifestHex;
+        const putHeadResp = await authFetch(
+          `${STORAGE_URL}/gt/v1/${didStr}/heads/claims`, 'PUT',
+          JSON.stringify({ expected: currentHeadHash, head: newHead })
+        );
+        if (putHeadResp.status === 409) {
+          // CAS conflict — reload and retry
+          markOk(step);
+          step = addStep('Conflict detected, retrying...');
+          await loadClaims();
+          // Re-apply user edits would be complex; just tell the user
+          throw new Error('Claims were updated elsewhere. Your edits are still in the form — try saving again.');
+        }
+        if (!putHeadResp.ok) throw new Error('PUT head: ' + putHeadResp.status + ' ' + await putHeadResp.text());
+        currentHeadHash = newHead;
+        markOk(step);
+
+        step = addStep('Saved!');
+        markOk(step);
+        document.getElementById('save-success').textContent = 'Claims updated successfully.';
+        document.getElementById('save-success').style.display = 'block';
+
+      } catch (e) {
+        const el = document.getElementById('save-error');
+        el.textContent = e.message;
+        el.style.display = 'block';
+      } finally {
+        this.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

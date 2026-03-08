@@ -1,0 +1,18 @@
+{
+  "@context": "https://www.w3.org/ns/did/v1",
+  "id": "did:web:did.greything.com:u:58nekpum",
+  "verificationMethod": [
+    {
+      "id": "did:web:did.greything.com:u:58nekpum#key-1",
+      "type": "Ed25519VerificationKey2020",
+      "controller": "did:web:did.greything.com:u:58nekpum",
+      "publicKeyMultibase": "zHemBCcKsRP1PToAMey6KRdzB7wXCJnb9tpYY9TqcnkUy"
+    }
+  ],
+  "authentication": [
+    "did:web:did.greything.com:u:58nekpum#key-1"
+  ],
+  "assertionMethod": [
+    "did:web:did.greything.com:u:58nekpum#key-1"
+  ]
+}

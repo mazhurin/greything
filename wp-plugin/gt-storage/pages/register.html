@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GreyThing — Register</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    h1 { color: #fff; margin: 0; }
+    h2 { color: #fff; margin: 0 0 16px 0; font-size: 20px; }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .steps {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .step-indicator {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      background: #2a2a2a;
+      color: #666;
+      cursor: default;
+    }
+    .step-indicator.active { background: #4a9eff; color: #fff; }
+    .step-indicator.done { background: #2d5a2d; color: #8f8; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .card {
+      background: #2a2a2a;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+    label:first-child { margin-top: 0; }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: inherit;
+    }
+    input::placeholder, textarea::placeholder { color: #555; }
+    textarea { resize: vertical; min-height: 60px; }
+    button {
+      padding: 10px 24px;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #4a9eff;
+      color: #fff;
+      margin-top: 16px;
+    }
+    button:hover { background: #3a8eef; }
+    button:disabled { background: #444; color: #888; cursor: not-allowed; }
+    .btn-secondary { background: #3a3a3a; color: #ccc; }
+    .btn-secondary:hover { background: #4a4a4a; }
+    .mono {
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      color: #4a9eff;
+    }
+    .key-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .key-label {
+      color: #888;
+      font-size: 13px;
+      white-space: nowrap;
+      min-width: 80px;
+    }
+    .progress-step { padding: 4px 0; font-size: 14px; color: #888; }
+    .progress-step.ok { color: #8f8; }
+    .progress-step.fail { color: #f88; }
+    .progress-step.running { color: #ff8; }
+    .download-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .download-row a {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #2d5a2d;
+      color: #8f8;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .download-row a:hover { background: #3a6a3a; }
+    .error { color: #f88; margin-top: 8px; }
+    .nav-buttons { display: flex; gap: 8px; margin-top: 16px; }
+    .radio-group { display: flex; gap: 16px; margin-top: 8px; }
+    .radio-group label { display: flex; align-items: center; gap: 6px; color: #e0e0e0; cursor: pointer; margin-top: 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <g fill="#e0e0e0">
+        <rect x="18" y="12" width="10" height="40" rx="3"/>
+        <rect x="36" y="12" width="10" height="40" rx="3"/>
+      </g>
+    </svg>
+    <h1>Register Your Identity</h1>
+  </div>
+
+  <div class="steps">
+    <span class="step-indicator active" data-step="0">1. Identity</span>
+    <span class="step-indicator" data-step="1">2. Keys</span>
+    <span class="step-indicator" data-step="2">3. Register</span>
+    <span class="step-indicator" data-step="3">4. Download</span>
+  </div>
+
+  <!-- Step 0: Choose Identity -->
+  <div class="panel active" id="panel-0">
+    <h2>Choose Your Identity</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      Your identity is a DID (Decentralized Identifier) hosted on this site.
+    </p>
+    <div class="card">
+      <label style="margin-top:0;">Identity type</label>
+      <div class="radio-group">
+        <label><input type="radio" name="did-type" value="root" id="did-type-root"> Root (<span class="mono" id="preview-root-did"></span>)</label>
+        <label><input type="radio" name="did-type" value="user" id="did-type-user" checked> User</label>
+      </div>
+      <div id="user-id-section" style="margin-top:12px;">
+        <label>Choose your ID</label>
+        <input type="text" id="custom-user-id" placeholder="alice" style="max-width:300px;">
+        <p style="color:#666; font-size:12px; margin:4px 0 0 0;">Lowercase letters and numbers, 3-20 characters.</p>
+        <div id="id-check-status" style="font-size:13px; margin-top:4px;"></div>
+        <p class="mono" id="preview-user-did" style="margin-top:8px;"></p>
+      </div>
+    </div>
+    <div class="nav-buttons">
+      <button id="btn-to-keys">Next: Generate Keys</button>
+    </div>
+  </div>
+
+  <!-- Step 1: Generate Keys -->
+  <div class="panel" id="panel-1">
+    <h2>Generate Keys</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      Three keypairs will be generated locally in your browser. Private keys never leave this page.
+    </p>
+    <button id="btn-generate">Generate Keys</button>
+    <div id="keys-display" style="display:none; margin-top:16px;">
+      <div class="card">
+        <div class="key-row"><span class="key-label">Root (Ed25519)</span><span class="mono" id="key-root-pub"></span></div>
+      </div>
+      <div class="card">
+        <div class="key-row"><span class="key-label">Device-1 (Ed25519)</span><span class="mono" id="key-device-pub"></span></div>
+      </div>
+      <div class="card">
+        <div class="key-row"><span class="key-label">X25519-1</span><span class="mono" id="key-x25519-pub"></span></div>
+      </div>
+      <div class="nav-buttons">
+        <button class="btn-secondary" onclick="goStep(0)">Back</button>
+        <button id="btn-to-register">Next: Register</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Register -->
+  <div class="panel" id="panel-2">
+    <h2>Register</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      This will create your DID identity on this site.
+    </p>
+    <div id="reg-summary" class="card" style="font-size:14px;"></div>
+    <button id="btn-register">Register Now</button>
+    <div id="progress" style="margin-top:16px;"></div>
+    <div id="reg-error" class="error" style="display:none;"></div>
+    <div id="reg-nav" class="nav-buttons" style="display:none;">
+      <button class="btn-secondary" onclick="goStep(1)">Back</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Download Keys -->
+  <div class="panel" id="panel-3">
+    <h2>Download Your Keys</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      Save these files securely. Your root key is the master key to your identity.
+    </p>
+    <div class="card">
+      <p style="margin:0 0 4px 0;">Your DID:</p>
+      <p class="mono" id="final-did" style="margin:0;"></p>
+    </div>
+    <div class="card">
+      <p style="margin:0 0 4px 0;">Your DID document:</p>
+      <p class="mono" id="final-did-url" style="margin:0;"></p>
+    </div>
+    <div class="card">
+      <p style="margin:0 0 4px 0;">Your storage endpoint:</p>
+      <p class="mono" id="final-storage-url" style="margin:0;"></p>
+    </div>
+    <div class="download-row" id="download-links"></div>
+    <p style="color:#ff8; font-size:13px; margin-top:16px;">
+      Save this file securely. It contains all your keys and is used to sign in.
+    </p>
+    <div style="margin-top:20px;">
+      <a href="/gt-dashboard" style="display:inline-block; padding:10px 24px; font-size:15px; background:#4a9eff; color:#fff; border-radius:4px; text-decoration:none;">Go to Dashboard &rarr;</a>
+    </div>
+
+  </div>
+
+  <script>
+    // ========== Config ==========
+    const SITE_DOMAIN = location.hostname;
+    const SITE_ORIGIN = location.origin;
+
+    // ========== State ==========
+    let currentStep = 0;
+    let keys = {};
+    let userID = '';
+    let didStr = '';
+    let didType = 'user'; // 'root' or 'user'
+    let didDocURL = ''; // set after registration
+
+    // ========== Base58 ==========
+    const B58_ALPHA = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    function base58Encode(bytes) {
+      let num = 0n;
+      for (const b of bytes) num = num * 256n + BigInt(b);
+      let s = '';
+      while (num > 0n) { s = B58_ALPHA[Number(num % 58n)] + s; num = num / 58n; }
+      for (const b of bytes) { if (b === 0) s = '1' + s; else break; }
+      return s || '1';
+    }
+
+    // ========== Hex / SHA-256 ==========
+    function hexEncode(bytes) {
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    async function sha256Hex(data) {
+      const buf = await crypto.subtle.digest('SHA-256', data instanceof Uint8Array ? data : new TextEncoder().encode(data));
+      return hexEncode(new Uint8Array(buf));
+    }
+    async function hashBody(bodyBytes) {
+      return 'sha256-' + await sha256Hex(bodyBytes);
+    }
+
+    // ========== Base64URL ==========
+    function base64urlEncode(bytes) {
+      const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      let s = '';
+      for (const b of arr) s += String.fromCharCode(b);
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function base64urlDecode(s) {
+      s = s.replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      const bin = atob(s);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return arr;
+    }
+
+    // ========== Key Generation ==========
+    async function generateEd25519(kid) {
+      const kp = await crypto.subtle.generateKey('Ed25519', true, ['sign', 'verify']);
+      const pubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+      const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+      const seed = base64urlDecode(privJwk.d);
+      const pubMultibase = 'z' + base58Encode(pubRaw);
+      return {
+        kp, pubRaw, seed, pubMultibase, kid,
+        kty: 'Ed25519',
+        privKeyFull: concatBytes(seed, pubRaw),
+      };
+    }
+    async function generateX25519(kid) {
+      const kp = await crypto.subtle.generateKey({ name: 'X25519' }, true, ['deriveKey', 'deriveBits']);
+      const pubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+      const privJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+      const privRaw = base64urlDecode(privJwk.d);
+      const pubMultibase = 'z' + base58Encode(pubRaw);
+      return { kp, pubRaw, privRaw, pubMultibase, kid, kty: 'X25519' };
+    }
+    function concatBytes(a, b) {
+      const out = new Uint8Array(a.length + b.length);
+      out.set(a); out.set(b, a.length);
+      return out;
+    }
+
+    // ========== Auth Signature ==========
+    async function signPayload(privateKey, timestamp, method, path, bodyBytes) {
+      const bodyHash = await hashBody(bodyBytes);
+      const payload = `${timestamp}|${method}|${path}|${bodyHash}`;
+      const sig = await crypto.subtle.sign('Ed25519', privateKey, new TextEncoder().encode(payload));
+      return base64urlEncode(new Uint8Array(sig));
+    }
+
+    async function authFetch(url, method, body, signingKey) {
+      const urlObj = new URL(url, location.origin);
+      const path = urlObj.pathname;
+      const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+      const bodyBytes = body instanceof Uint8Array ? body : new TextEncoder().encode(body || '');
+      const sig = await signPayload(signingKey.kp.privateKey, timestamp, method, path, bodyBytes);
+      const headers = {
+        'X-GT-DID': didStr,
+        'X-GT-Timestamp': timestamp,
+        'X-GT-Signature': sig,
+      };
+      if (typeof body === 'string') headers['Content-Type'] = 'application/json';
+      return fetch(url, { method, headers, body: bodyBytes });
+    }
+
+    // ========== Random ID ==========
+    function randomID(len) {
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      const arr = new Uint8Array(len);
+      crypto.getRandomValues(arr);
+      return Array.from(arr).map(b => chars[b % chars.length]).join('');
+    }
+
+    // ========== Stepper ==========
+    function goStep(n) {
+      currentStep = n;
+      document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === n));
+      document.querySelectorAll('.step-indicator').forEach((s, i) => {
+        s.classList.remove('active', 'done');
+        if (i === n) s.classList.add('active');
+        else if (i < n) s.classList.add('done');
+      });
+    }
+
+    // ========== Step 0: Identity ==========
+    document.getElementById('preview-root-did').textContent = `did:web:${SITE_DOMAIN}`;
+
+    function updatePreview() {
+      const val = document.getElementById('custom-user-id').value.trim().toLowerCase();
+      const el = document.getElementById('preview-user-did');
+      if (val && /^[a-z0-9]{3,20}$/.test(val)) {
+        el.textContent = `did:web:${SITE_DOMAIN}:users:${val}`;
+      } else if (val) {
+        el.textContent = '';
+      } else {
+        el.textContent = `did:web:${SITE_DOMAIN}:users:{random}`;
+      }
+    }
+    updatePreview();
+
+    document.querySelectorAll('input[name="did-type"]').forEach(r => {
+      r.addEventListener('change', function() {
+        didType = this.value;
+        document.getElementById('user-id-section').style.display = didType === 'root' ? 'none' : 'block';
+      });
+    });
+
+    document.getElementById('custom-user-id').addEventListener('input', function() {
+      updatePreview();
+      // Live availability check
+      clearTimeout(idCheckTimer);
+      const statusEl = document.getElementById('id-check-status');
+      const val = this.value.trim().toLowerCase();
+      if (!val) { statusEl.textContent = ''; return; }
+      if (!/^[a-z0-9]{3,20}$/.test(val)) {
+        statusEl.style.color = '#f88';
+        statusEl.textContent = 'Use 3\u201320 lowercase letters and numbers only';
+        return;
+      }
+      statusEl.style.color = '#888';
+      statusEl.textContent = 'Checking...';
+      idCheckTimer = setTimeout(async () => {
+        try {
+          const resp = await fetch(`${SITE_ORIGIN}/gt/v1/register/check/${val}`);
+          if (resp.status === 404) {
+            // 404 = not found = available
+            statusEl.style.color = '#8f8';
+            statusEl.textContent = '\u2713 Available';
+          } else if (resp.ok) {
+            // 200 = found = taken
+            statusEl.style.color = '#f88';
+            statusEl.textContent = '\u2717 Already taken';
+          } else {
+            statusEl.style.color = '#888';
+            statusEl.textContent = 'Cannot check (HTTP ' + resp.status + ')';
+          }
+        } catch(e) {
+          statusEl.style.color = '#f88';
+          statusEl.textContent = 'Cannot reach server';
+        }
+      }, 400);
+    });
+    let idCheckTimer = null;
+
+    document.getElementById('btn-to-keys').addEventListener('click', () => {
+      if (didType === 'user') {
+        const val = document.getElementById('custom-user-id').value.trim().toLowerCase();
+        if (val && !/^[a-z0-9]{3,20}$/.test(val)) {
+          alert('Invalid ID: use 3-20 lowercase letters and numbers');
+          return;
+        }
+      }
+      goStep(1);
+    });
+
+    // ========== Step 1: Generate Keys ==========
+    document.getElementById('btn-generate').addEventListener('click', async function() {
+      this.disabled = true;
+      this.textContent = 'Generating...';
+      try {
+        keys.root = await generateEd25519('root');
+        keys.device1 = await generateEd25519('device-1');
+        keys.x25519 = await generateX25519('x25519-1');
+        document.getElementById('key-root-pub').textContent = keys.root.pubMultibase;
+        document.getElementById('key-device-pub').textContent = keys.device1.pubMultibase;
+        document.getElementById('key-x25519-pub').textContent = keys.x25519.pubMultibase;
+        document.getElementById('keys-display').style.display = 'block';
+        this.style.display = 'none';
+      } catch (e) {
+        alert('Key generation failed: ' + e.message + '\n\nEd25519/X25519 require Chrome 113+.');
+        this.disabled = false;
+        this.textContent = 'Generate Keys';
+      }
+    });
+
+    document.getElementById('btn-to-register').addEventListener('click', () => {
+      goStep(2);
+      prepareSummary();
+    });
+
+    // ========== Step 2: Summary ==========
+    function prepareSummary() {
+      // Determine DID
+      if (didType === 'root') {
+        userID = '';
+        didStr = `did:web:${SITE_DOMAIN}`;
+      } else {
+        const customVal = document.getElementById('custom-user-id').value.trim().toLowerCase();
+        userID = customVal || randomID(8);
+        didStr = `did:web:${SITE_DOMAIN}:users:${userID}`;
+      }
+
+      let html = '<div style="margin-bottom:8px;"><strong>DID:</strong> <span class="mono">' + didStr + '</span></div>';
+      html += '<div style="margin-bottom:8px;"><strong>Root key:</strong> <span class="mono">' +
+        keys.root.pubMultibase.slice(0, 16) + '...</span></div>';
+      html += '<div><strong>Type:</strong> ' + (didType === 'root' ? 'Root identity' : 'User identity') + '</div>';
+      document.getElementById('reg-summary').innerHTML = html;
+      document.getElementById('reg-nav').style.display = 'flex';
+    }
+
+    // ========== Step 2: Register ==========
+    document.getElementById('btn-register').addEventListener('click', async function() {
+      this.disabled = true;
+      document.getElementById('reg-nav').style.display = 'none';
+      document.getElementById('reg-error').style.display = 'none';
+      const prog = document.getElementById('progress');
+      prog.innerHTML = '';
+
+      function addStep(text) {
+        const div = document.createElement('div');
+        div.className = 'progress-step running';
+        div.textContent = '... ' + text;
+        prog.appendChild(div);
+        return div;
+      }
+      function markOk(div) { div.className = 'progress-step ok'; div.textContent = '\u2713 ' + div.textContent.slice(4); }
+      function markFail(div, err) { div.className = 'progress-step fail'; div.textContent = '\u2717 ' + div.textContent.slice(4) + ' \u2014 ' + err; }
+
+      try {
+        // 1. Build DID document
+        let step = addStep('Building DID document');
+        const storageEndpoint = `${SITE_ORIGIN}/gt/v1/${didStr}`;
+        const didDoc = {
+          '@context': ['https://www.w3.org/ns/did/v1'],
+          id: didStr,
+          verificationMethod: [
+            { id: `${didStr}#root`, type: 'Ed25519VerificationKey2020', controller: didStr, publicKeyMultibase: keys.root.pubMultibase },
+            { id: `${didStr}#device-1`, type: 'Ed25519VerificationKey2020', controller: didStr, publicKeyMultibase: keys.device1.pubMultibase },
+            { id: `${didStr}#x25519-1`, type: 'X25519KeyAgreementKey2020', controller: didStr, publicKeyMultibase: keys.x25519.pubMultibase },
+          ],
+          authentication: [`${didStr}#root`],
+          assertionMethod: [`${didStr}#root`],
+          capabilityInvocation: [`${didStr}#root`],
+          capabilityDelegation: [`${didStr}#root`],
+          keyAgreement: [`${didStr}#x25519-1`],
+          service: [{
+            id: `${didStr}#pod`,
+            type: 'SolidPod',
+            serviceEndpoint: storageEndpoint,
+          }],
+        };
+        markOk(step);
+
+        // 2. Register DID via plugin API
+        step = addStep('Registering DID');
+        const regResp = await fetch(`${SITE_ORIGIN}/gt/v1/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userID: userID, didDocument: didDoc }),
+        });
+        if (!regResp.ok) {
+          const errData = await regResp.json().catch(() => ({}));
+          throw new Error(errData.message || 'Registration failed: ' + regResp.status);
+        }
+        const regResult = await regResp.json();
+        markOk(step);
+
+        // 3. Store DID document as blob
+        step = addStep('Storing DID blob');
+        const didDocJSON = JSON.stringify(didDoc);
+        const didDocBytes = new TextEncoder().encode(didDocJSON);
+        const didDocHex = await sha256Hex(didDocBytes);
+        const putBlobResp = await authFetch(
+          `${SITE_ORIGIN}/gt/v1/${didStr}/blobs/sha256/${didDocHex}`, 'PUT', didDocJSON, keys.root
+        );
+        if (!putBlobResp.ok && putBlobResp.status !== 409) throw new Error('PUT DID blob: ' + putBlobResp.status);
+        markOk(step);
+
+        // 4. Create DID log genesis entry
+        step = addStep('Creating DID log');
+        const logEntry = {
+          version: 1,
+          type: 'Genesis',
+          did: didStr,
+          prev: '',
+          didDocHash: 'sha256-' + didDocHex,
+          createdAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        };
+        const logJSON = JSON.stringify(logEntry);
+        const logBytes = new TextEncoder().encode(logJSON);
+        const logHex = await sha256Hex(logBytes);
+
+        const putLogResp = await authFetch(
+          `${SITE_ORIGIN}/gt/v1/${didStr}/blobs/sha256/${logHex}`, 'PUT', logJSON, keys.root
+        );
+        if (!putLogResp.ok && putLogResp.status !== 409) throw new Error('PUT log blob: ' + putLogResp.status);
+
+        const putLogHeadResp = await authFetch(
+          `${SITE_ORIGIN}/gt/v1/${didStr}/heads/didlog`, 'PUT',
+          JSON.stringify({ expected: '', head: 'sha256-' + logHex }), keys.root
+        );
+        if (!putLogHeadResp.ok) throw new Error('PUT didlog head: ' + putLogHeadResp.status);
+        markOk(step);
+
+        // Done
+        step = addStep('Registration complete!');
+        markOk(step);
+
+        // Show download page
+        document.getElementById('final-did').textContent = didStr;
+        didDocURL = regResult.didDocumentURL;
+        document.getElementById('final-did-url').textContent = regResult.didDocumentURL;
+        document.getElementById('final-storage-url').textContent = regResult.storageEndpoint;
+        prepareDownload();
+        goStep(3);
+
+      } catch (e) {
+        const errDiv = document.getElementById('reg-error');
+        errDiv.textContent = e.message;
+        errDiv.style.display = 'block';
+        document.getElementById('reg-nav').style.display = 'flex';
+        this.disabled = false;
+      }
+    });
+
+    // ========== Key File Builder ==========
+    function buildKeyFile(keyObj) {
+      const file = {
+        kty: keyObj.kty,
+        kid: keyObj.kid,
+        createdAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+        publicKeyMultibase: keyObj.pubMultibase,
+      };
+      if (keyObj.kty === 'Ed25519') {
+        file.privateKeyB64Url = base64urlEncode(keyObj.privKeyFull);
+      } else {
+        file.privateKeyB64Url = base64urlEncode(keyObj.privRaw);
+      }
+      return JSON.stringify(file, null, 2);
+    }
+
+    // ========== Identity File Builder ==========
+    function buildIdentityFile() {
+      return JSON.stringify({
+        did: didStr,
+        keys: {
+          root: JSON.parse(buildKeyFile(keys.root)),
+          'device-1': JSON.parse(buildKeyFile(keys.device1)),
+          'x25519-1': JSON.parse(buildKeyFile(keys.x25519)),
+        }
+      }, null, 2);
+    }
+
+    // ========== Download ==========
+    function prepareDownload() {
+      const container = document.getElementById('download-links');
+      container.innerHTML = '';
+      const prefix = userID || 'root';
+      const identityData = buildIdentityFile();
+      const blob = new Blob([identityData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${prefix}-identity.json`;
+      a.textContent = `Identity File (${prefix}-identity.json)`;
+      container.appendChild(a);
+    }
+  </script>
+</body>
+</html>
