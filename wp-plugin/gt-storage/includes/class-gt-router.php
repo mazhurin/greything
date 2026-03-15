@@ -169,6 +169,7 @@ class GT_Router {
         header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, X-GT-DID, X-GT-Timestamp, X-GT-Signature, X-GT-Grant');
         header('Access-Control-Max-Age: 86400');
+        header('Cache-Control: no-store, no-cache');
     }
 
     /**

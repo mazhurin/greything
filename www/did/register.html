@@ -165,9 +165,10 @@
   <div class="steps">
     <span class="step-indicator active" data-step="0">1. Generate</span>
     <span class="step-indicator" data-step="1">2. Claims</span>
-    <span class="step-indicator" data-step="2">3. Recovery</span>
-    <span class="step-indicator" data-step="3">4. Register</span>
-    <span class="step-indicator" data-step="4">5. Download</span>
+    <span class="step-indicator" data-step="2">3. Verify Email</span>
+    <span class="step-indicator" data-step="3">4. Recovery</span>
+    <span class="step-indicator" data-step="4">5. Register</span>
+    <span class="step-indicator" data-step="5">6. Download</span>
   </div>
 
   <!-- Step 0: Generate Keys -->
@@ -206,8 +207,10 @@
   <!-- Step 1: Claims -->
   <div class="panel" id="panel-1">
     <h2>Public Claims</h2>
-    <p style="color:#888; font-size:14px; margin-top:0;">All fields are optional. These help others find you.</p>
+    <p style="color:#888; font-size:14px; margin-top:0;">Email is required for verification. Other fields are optional.</p>
     <div class="card">
+      <label>Email (required — will be verified, stored as hash only)</label>
+      <input type="text" id="claim-email" placeholder="alice@example.com">
       <label>Name</label>
       <input type="text" id="claim-name" placeholder="Alice">
       <label>Family name</label>
@@ -224,19 +227,45 @@
       <textarea id="claim-about" placeholder="A few words about yourself"></textarea>
       <label>Keywords</label>
       <input type="text" id="claim-keywords" placeholder="developer, crypto, music">
-      <label>Email (stored as hash only)</label>
-      <input type="text" id="claim-email" placeholder="alice@example.com">
       <label>Phone (stored as hash only)</label>
       <input type="tel" id="claim-phone" placeholder="+1234567890">
     </div>
     <div class="nav-buttons">
       <button class="btn-secondary" onclick="goStep(0)">Back</button>
-      <button onclick="goStep(2)">Next: Recovery</button>
+      <button id="btn-to-verify">Next: Verify Email</button>
     </div>
   </div>
 
-  <!-- Step 2: Recovery -->
+  <!-- Step 2: Verify Email -->
   <div class="panel" id="panel-2">
+    <h2>Verify Email</h2>
+    <p style="color:#888; font-size:14px; margin-top:0;">
+      We'll send a verification code to your email address. This prevents spam and proves you control this mailbox.
+    </p>
+    <div class="card" id="verify-send-card">
+      <p style="margin:0;">Sending verification code to: <strong id="verify-email-display"></strong></p>
+      <button id="btn-send-code" style="margin-top:12px;">Send Verification Code</button>
+      <div id="verify-send-status" style="font-size:13px; margin-top:8px;"></div>
+    </div>
+    <div class="card" id="verify-code-card" style="display:none;">
+      <label>Enter 6-digit code</label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="text" id="verify-code-input" placeholder="000000" maxlength="6" style="max-width:150px; font-size:20px; letter-spacing:4px; text-align:center;">
+        <button id="btn-verify-code" style="margin-top:0;">Verify</button>
+      </div>
+      <div id="verify-code-status" style="font-size:13px; margin-top:8px;"></div>
+    </div>
+    <div id="verify-success" class="card" style="display:none;">
+      <p style="margin:0; color:#8f8;">Email verified successfully.</p>
+    </div>
+    <div class="nav-buttons">
+      <button class="btn-secondary" onclick="goStep(1)">Back</button>
+      <button id="btn-to-recovery" disabled>Next: Recovery</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Recovery -->
+  <div class="panel" id="panel-3">
     <h2>Recovery Passphrase</h2>
     <p style="color:#888; font-size:14px; margin-top:0;">
       Optional. Encrypts your root key and stores it on the server, so you can recover your identity with just this passphrase.
@@ -258,13 +287,13 @@
       </div>
     </div>
     <div id="recovery-nav" class="nav-buttons">
-      <button class="btn-secondary" onclick="goStep(1)">Back</button>
+      <button class="btn-secondary" onclick="goStep(2)">Back</button>
       <button id="btn-to-register">Next: Register</button>
     </div>
   </div>
 
-  <!-- Step 3: Register -->
-  <div class="panel" id="panel-3">
+  <!-- Step 4: Register -->
+  <div class="panel" id="panel-4">
     <h2>Register</h2>
     <p style="color:#888; font-size:14px; margin-top:0;">
       This will create your DID identity on the GreyThing network.
@@ -274,12 +303,12 @@
     <div id="progress" style="margin-top:16px;"></div>
     <div id="reg-error" class="error" style="display:none;"></div>
     <div id="reg-nav" class="nav-buttons" style="display:none;">
-      <button class="btn-secondary" onclick="goStep(2)">Back</button>
+      <button class="btn-secondary" onclick="goStep(3)">Back</button>
     </div>
   </div>
 
-  <!-- Step 4: Download Keys -->
-  <div class="panel" id="panel-4">
+  <!-- Step 5: Download Keys -->
+  <div class="panel" id="panel-5">
     <h2>Download Your Keys</h2>
     <p style="color:#888; font-size:14px; margin-top:0;">
       Save your identity file securely. It contains your device keys and is used to sign in.
@@ -322,6 +351,7 @@
     // ========== Config ==========
     const DIDS_URL = '';  // same origin
     const STORAGE_URL = 'https://storage.greything.com';
+    const VERIFY_URL = '';  // same origin, proxied via nginx
     const DID_DOMAIN = 'did.greything.com';
 
     // ========== State ==========
@@ -331,6 +361,8 @@
     let didStr = '';
     let savedDidDoc = null;          // DID document for embedding in identity file
     let encryptedRootKeyBlob = null; // encrypted root key JSON string (if passphrase set)
+    let emailAttestation = null;     // VerifiedEmailAttestation from email verifier
+    let emailVerificationState = {}; // { verificationId, challenge }
 
     // ========== Base58 ==========
     const B58_ALPHA = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -548,7 +580,103 @@
 
     document.getElementById('btn-to-claims').addEventListener('click', () => goStep(1));
 
-    // ========== Step 2: Recovery confirmation ==========
+    // ========== Step 1→2: Verify Email gate ==========
+    document.getElementById('btn-to-verify').addEventListener('click', () => {
+      const email = document.getElementById('claim-email').value.trim();
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        alert('Please enter a valid email address. Email verification is required for registration.');
+        return;
+      }
+      document.getElementById('verify-email-display').textContent = email;
+      goStep(2);
+    });
+
+    // ========== Step 2: Email Verification ==========
+    document.getElementById('btn-send-code').addEventListener('click', async function() {
+      this.disabled = true;
+      const statusEl = document.getElementById('verify-send-status');
+      statusEl.style.color = '#888';
+      statusEl.textContent = 'Sending...';
+
+      const email = document.getElementById('claim-email').value.trim();
+      userID = document.getElementById('custom-user-id').value.trim().toLowerCase();
+      didStr = `did:web:${DID_DOMAIN}:u:${userID}`;
+
+      try {
+        const resp = await fetch(`${VERIFY_URL}/verify/v1/email/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ did: didStr, email: email }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.message || 'Failed to send verification code');
+        }
+        emailVerificationState = {
+          verificationId: data.verificationId,
+          challenge: data.challenge,
+        };
+        statusEl.style.color = '#8f8';
+        statusEl.textContent = 'Code sent! Check your inbox.';
+        document.getElementById('verify-code-card').style.display = 'block';
+        document.getElementById('verify-code-input').focus();
+      } catch (e) {
+        statusEl.style.color = '#f88';
+        statusEl.textContent = e.message;
+        this.disabled = false;
+      }
+    });
+
+    document.getElementById('btn-verify-code').addEventListener('click', async function() {
+      this.disabled = true;
+      const statusEl = document.getElementById('verify-code-status');
+      statusEl.style.color = '#888';
+      statusEl.textContent = 'Verifying...';
+
+      const code = document.getElementById('verify-code-input').value.trim();
+      if (!code || code.length !== 6) {
+        statusEl.style.color = '#f88';
+        statusEl.textContent = 'Enter the 6-digit code from your email.';
+        this.disabled = false;
+        return;
+      }
+
+      try {
+        // Sign challenge with root key
+        const challenge = emailVerificationState.challenge;
+        const sig = await crypto.subtle.sign('Ed25519', keys.root.kp.privateKey, new TextEncoder().encode(challenge));
+        const sigB64 = base64urlEncode(new Uint8Array(sig));
+
+        const resp = await fetch(`${VERIFY_URL}/verify/v1/email/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            verificationId: emailVerificationState.verificationId,
+            code: code,
+            challenge: challenge,
+            challengeSignature: sigB64,
+            publicKeyMultibase: keys.root.pubMultibase,
+          }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.message || 'Verification failed');
+        }
+        emailAttestation = data.attestation;
+        document.getElementById('verify-send-card').style.display = 'none';
+        document.getElementById('verify-code-card').style.display = 'none';
+        document.getElementById('verify-success').style.display = 'block';
+        document.getElementById('btn-to-recovery').disabled = false;
+      } catch (e) {
+        statusEl.style.color = '#f88';
+        statusEl.textContent = e.message;
+        this.disabled = false;
+      }
+    });
+
+    document.getElementById('btn-to-recovery').addEventListener('click', () => goStep(3));
+
+    // ========== Step 3: Recovery confirmation ==========
     const btnToRegister = document.getElementById('btn-to-register');
     const recoveryConfirm = document.getElementById('recovery-confirm');
     const recoveryNav = document.getElementById('recovery-nav');
@@ -560,7 +688,7 @@
         recoveryConfirm.style.display = 'block';
         recoveryNav.style.display = 'none';
       } else {
-        goStep(3);
+        goStep(4);
         prepareSummary();
       }
     });
@@ -571,11 +699,11 @@
     });
 
     document.getElementById('btn-recovery-yes').addEventListener('click', () => {
-      goStep(3);
+      goStep(4);
       prepareSummary();
     });
 
-    // ========== Step 3: Summary ==========
+    // ========== Step 4: Summary ==========
     function prepareSummary() {
       const claims = gatherClaims();
       const passphrase = document.getElementById('recovery-passphrase').value.trim();
@@ -583,6 +711,8 @@
 
       let html = '<div style="margin-bottom:8px;"><strong>Root key:</strong> <span class="mono">' +
         keys.root.pubMultibase.slice(0, 16) + '...</span></div>';
+      html += '<div style="margin-bottom:8px;"><strong>Email:</strong> ' +
+        (emailAttestation ? '<span style="color:#8f8;">verified</span>' : '<span style="color:#f88;">not verified</span>') + '</div>';
       html += '<div style="margin-bottom:8px;"><strong>Claims:</strong> ' +
         (claimKeys.length ? claimKeys.join(', ') : 'none') + '</div>';
       html += '<div><strong>Recovery:</strong> ' +
@@ -607,6 +737,9 @@
       if (email) {
         claims['email_hash'] = 'sha256-' + await sha256Hex(email.toLowerCase());
       }
+      if (emailAttestation) {
+        claims['email_verified_by'] = emailAttestation.issuer;
+      }
       const phone = document.getElementById('claim-phone').value.trim();
       if (phone) {
         claims['phone_hash'] = 'sha256-' + await sha256Hex(phone);
@@ -614,7 +747,7 @@
       return claims;
     }
 
-    // ========== Step 3: Register ==========
+    // ========== Step 4: Register ==========
     document.getElementById('btn-register').addEventListener('click', async function() {
       this.disabled = true;
       document.getElementById('reg-nav').style.display = 'none';
@@ -753,11 +886,25 @@
           markOk(step);
         }
 
+        // 8. Email attestation (if verified)
+        if (emailAttestation) {
+          step = addStep('Storing email attestation');
+          const attJSON = JSON.stringify(emailAttestation);
+          const attBytes = new TextEncoder().encode(attJSON);
+          const attHex = await sha256Hex(attBytes);
+
+          const putAttResp = await authFetch(
+            `${STORAGE_URL}/gt/v1/${didStr}/blobs/sha256/${attHex}`, 'PUT', attJSON, keys.root
+          );
+          if (!putAttResp.ok && putAttResp.status !== 409) throw new Error('PUT attestation blob: ' + putAttResp.status);
+          markOk(step);
+        }
+
         // Done — prepare download
         step = addStep('Registration complete!');
         markOk(step);
         prepareDownload();
-        goStep(4);
+        goStep(5);
 
       } catch (e) {
         const errDiv = document.getElementById('reg-error');

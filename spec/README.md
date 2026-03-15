@@ -38,6 +38,7 @@ GreyThing focuses instead on reusable protocol components that independent appli
 | [grants-v1.md](grants-v1.md) | Signed capability grants, grant-based blob access |
 | [discovery-v1.md](discovery-v1.md) | Claims-based identity discovery, search, privacy-preserving lookup |
 | [messaging-v1.md](messaging-v1.md) | End-to-end encrypted messaging with file attachments |
+| [email-verification-v1.md](email-verification-v1.md) | Email verification for DID registration, signed attestations |
 
 ## How They Fit Together
 
@@ -55,6 +56,9 @@ discovery-v1         How others find you. Claims, search, lookup.
     │
     ▼
 messaging-v1         Demonstration application using all layers.
+    │
+    ▼
+email-verification-v1  Anti-spam gate for registration.
 ```
 
 Identity is independent from storage. Storage is independent from applications. Grants bridge the two — they let resource owners authorize specific identities to access specific data.

@@ -9,6 +9,9 @@ Specifications: see `/spec`
 
 Reference implementation: this repository
 
+GreyThing allows identities hosted on different websites to communicate and share data without creating platform accounts.
+GreyThing allows data to be hosted by independent providers without transferring authority over identity, integrity or access control to those providers.
+
 GreyThing explores protocols where identity is anchored in cryptographic root keys and data is stored in user-controlled storage endpoints, allowing services and agents to access user-authorized data through capability-based mechanisms.
 
 * **Identity belongs to users and can move across domains and providers.**

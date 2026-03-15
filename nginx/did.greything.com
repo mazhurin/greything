@@ -1,3 +1,5 @@
+limit_req_zone $binary_remote_addr zone=verify_start:10m rate=3r/m;
+
 server {
   server_name did.greything.com;
 
@@ -61,6 +63,59 @@ server {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
     client_max_body_size 1M;
+  }
+
+  # Email verifier API — proxy to gt-email-verifier
+  location /verify/v1/email/start {
+    limit_req zone=verify_start burst=3 nodelay;
+
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Content-Type" always;
+    add_header Access-Control-Max-Age 86400 always;
+
+    if ($request_method = OPTIONS) {
+      return 204;
+    }
+
+    proxy_pass http://127.0.0.1:8091/v1/email/start;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    client_max_body_size 4k;
+  }
+
+  location /verify/v1/email/complete {
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "POST, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Content-Type" always;
+    add_header Access-Control-Max-Age 86400 always;
+
+    if ($request_method = OPTIONS) {
+      return 204;
+    }
+
+    proxy_pass http://127.0.0.1:8091/v1/email/complete;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    client_max_body_size 4k;
+  }
+
+  location /verify/v1/health {
+    proxy_pass http://127.0.0.1:8091/v1/health;
+    proxy_set_header Host $host;
+  }
+
+  # Verifier DID documents (static)
+  location /verifiers/ {
+    root /var/www/did;
+    default_type application/json;
+    add_header Cache-Control "public, max-age=3600";
+    add_header Access-Control-Allow-Origin "*" always;
+    try_files $uri =404;
   }
 
   location / {

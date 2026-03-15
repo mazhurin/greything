@@ -546,7 +546,7 @@
       if (hasBody && typeof body === 'string') headers['Content-Type'] = 'application/json';
       if (extraHeaders) Object.assign(headers, extraHeaders);
 
-      return fetch(url, { method, headers, body: hasBody ? bodyBytes : undefined });
+      return fetch(url, { method, headers, body: hasBody ? bodyBytes : undefined, cache: 'no-store' });
     }
 
     // ========== LocalStorage ==========
@@ -989,7 +989,8 @@
       try {
         const listResp = await authFetch(`${myStorageURL}/gt/v1/${didStr}/inbox`, 'GET', '');
         if (!listResp.ok) {
-          statusEl.textContent = 'Failed to fetch inbox';
+          const errText = await listResp.text().catch(() => '');
+          statusEl.textContent = 'Failed to fetch inbox: ' + listResp.status + ' ' + errText;
           return 0;
         }
         const items = await listResp.json();
@@ -999,10 +1000,15 @@
         }
         statusEl.textContent = `Processing ${items.length} message(s)...`;
         let processed = 0;
+        let errors = [];
         for (const item of items) {
           try {
             const getResp = await authFetch(`${myStorageURL}/gt/v1/${didStr}/inbox/${item.id}`, 'GET', '');
-            if (!getResp.ok) continue;
+            if (!getResp.ok) {
+              const errBody = await getResp.text().catch(() => '');
+              errors.push('GET ' + item.id + ': ' + getResp.status + ' ' + errBody);
+              continue;
+            }
             const envelope = await getResp.json();
             const innerMsg = await decryptEnvelope(envelope);
             const sigOk = await verifySenderSig(innerMsg);
@@ -1027,10 +1033,13 @@
             processed++;
           } catch(e) {
             console.error('Failed to process inbox item', item.id, e);
+            errors.push(item.id.slice(0, 12) + ': ' + e.message);
           }
         }
         if (processed > 0) await savePMManifest();
-        statusEl.textContent = processed > 0 ? `${processed} new message(s)` : 'No new messages';
+        let status = processed > 0 ? `${processed} new message(s)` : 'No new messages';
+        if (errors.length > 0) status += ' | Errors: ' + errors.join('; ');
+        statusEl.textContent = status;
         return processed;
       } catch(e) {
         statusEl.textContent = 'Error: ' + e.message;
